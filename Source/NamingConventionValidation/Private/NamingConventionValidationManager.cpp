@@ -56,10 +56,26 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data ) const
 {
     auto result = ENamingConventionValidationResult::Unknown;
+    static const FName blueprint_class_name( "Blueprint" );
+
+    auto asset_class = asset_data.AssetClass;
+
+    if ( asset_data.AssetClass == blueprint_class_name )
+    {
+        static const FName key( "NativeParentClass" );
+
+        if ( asset_data.GetTagValue( key, asset_class ) )
+        {
+            auto asset_class_str = asset_class.ToString();
+            asset_class_str.RemoveFromStart( "Class'/Script/" );
+            asset_class_str.RemoveFromEnd( "'" );
+            asset_class = *asset_class_str;
+        }
+    }
 
     for ( const auto & class_description : ClassDescriptions )
     {
-        if ( class_description.ClassName == asset_data.AssetClass )
+        if ( class_description.ClassName == asset_class )
         {
             const auto asset_name = asset_data.AssetName.ToString();
 
