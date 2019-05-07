@@ -1,0 +1,21 @@
+{
+    "FileVersion" : 3,
+    "Version" : 1,
+    "VersionName" : "1.0",
+    "FriendlyName" : "Naming Convention Validation",
+    "Description" : "An asset naming convention validation plug-in.",
+    "Category" : "Validation",
+    "CreatedBy" : "Michael Delva",
+    "CreatedByURL": "http://www.emidee.net",
+    "EnabledByDefault" : false,
+    "CanContainContent": false,
+
+    "Modules" :
+    [
+        {
+            "Name" : "NamingConventionValidation",
+            "Type" : "Developer",
+            "LoadingPhase" : "PreDefault"
+        }
+    ]
+}
