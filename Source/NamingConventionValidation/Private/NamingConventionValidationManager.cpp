@@ -33,7 +33,7 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
         GNamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
         checkf( GNamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) )
 
-        GNamingConventionValidationManager->AddToRoot();
+            GNamingConventionValidationManager->AddToRoot();
         GNamingConventionValidationManager->Initialize();
     }
 
@@ -51,11 +51,6 @@ void UNamingConventionValidationManager::Initialize()
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
 {
-}
-
-ENamingConventionValidationResult UNamingConventionValidationManager::IsObjectNamedCorrectly( UObject * object ) const
-{
-    return ENamingConventionValidationResult::Invalid;
 }
 
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data ) const
