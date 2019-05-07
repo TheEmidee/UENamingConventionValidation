@@ -26,18 +26,7 @@ namespace UnrealBuildTool.Rules
                     "SlateCore",
                     "UnrealEd",
                     "AssetRegistry",
-                    /*"InputCore",
-                    "Json",
-                    "CollectionManager",
-                    "ContentBrowser",
-                    "WorkspaceMenuStructure",
-                    "EditorStyle",
-                    "AssetTools",
-                    "PropertyEditor",
-                    "GraphEditor",
-                    "BlueprintGraph",
-                    "KismetCompiler",
-                    "SandboxFile"*/
+                    "EditorStyle"
                 }
             );
         }

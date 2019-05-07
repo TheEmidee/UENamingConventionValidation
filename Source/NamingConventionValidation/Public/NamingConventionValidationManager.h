@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "UObject/Object.h"
 #include "AssetData.h"
+#include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
+#include "UObject/Object.h"
+
 #include "NamingConventionValidationManager.generated.h"
 
 class FLogWindowManager;
@@ -36,20 +37,19 @@ public:
     virtual void ValidateSavedPackage( FName package_name );
 
 protected:
-
     virtual bool IsPathExcludedFromValidation( const FString & path ) const;
     void ValidateAllSavedPackages();
 
-    UPROPERTY(config)
-    TArray<FDirectoryPath> ExcludedDirectories;
+    UPROPERTY( config )
+    TArray< FDirectoryPath > ExcludedDirectories;
 
-    UPROPERTY(config)
+    UPROPERTY( config )
     bool bValidateOnSave;
 
-    TArray<FName> SavedPackagesToValidate;
+
+    TArray< FName > SavedPackagesToValidate;
 
 private:
-
-    UPROPERTY(config)
+    UPROPERTY( config )
     FSoftClassPath NamingConventionValidationManagerClassName;
 };

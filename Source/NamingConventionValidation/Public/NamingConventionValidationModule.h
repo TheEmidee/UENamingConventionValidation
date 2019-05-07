@@ -23,6 +23,4 @@ public:
         QUICK_SCOPE_CYCLE_COUNTER(STAT_INamingConventionValidationModule_IsAvailable);
         return FModuleManager::Get().IsModuleLoaded( "NamingConventionValidation" );
     }
-
-    virtual void ValidateAssets( const TArray< FAssetData > & selected_assets ) const = 0;
 };
