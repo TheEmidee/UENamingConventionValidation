@@ -19,7 +19,22 @@ enum class ENamingConventionValidationResult : uint8
     Unknown
 };
 
-UCLASS(config=Editor)
+USTRUCT()
+struct FNamingConventionValidationClassDescription
+{
+    GENERATED_USTRUCT_BODY()
+
+    UPROPERTY( config )
+    FString ClassName;
+
+    UPROPERTY( config )
+    FString Prefix;
+
+    UPROPERTY( config )
+    FString Suffix;
+};
+
+UCLASS( config = Editor )
 class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationManager : public UObject
 {
     GENERATED_UCLASS_BODY()
@@ -46,6 +61,8 @@ protected:
     UPROPERTY( config )
     bool bValidateOnSave;
 
+    UPROPERTY( config )
+    TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
 
     TArray< FName > SavedPackagesToValidate;
 
