@@ -25,7 +25,7 @@ struct FNamingConventionValidationClassDescription
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY( config )
-    FString ClassName;
+    FName ClassName;
 
     UPROPERTY( config )
     FString Prefix;

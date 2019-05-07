@@ -55,7 +55,38 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data ) const
 {
-    return ENamingConventionValidationResult::Invalid;
+    auto result = ENamingConventionValidationResult::Unknown;
+
+    for ( const auto & class_description : ClassDescriptions )
+    {
+        if ( class_description.ClassName == asset_data.AssetClass )
+        {
+            const auto asset_name = asset_data.AssetName.ToString();
+
+            if ( !class_description.Prefix.IsEmpty() )
+            {
+                if ( !asset_name.StartsWith( class_description.Prefix ) )
+                {
+                    result = ENamingConventionValidationResult::Invalid;
+                    break;
+                }
+            }
+
+            if ( !class_description.Suffix.IsEmpty() )
+            {
+                if ( !asset_name.EndsWith( class_description.Suffix ) )
+                {
+                    result = ENamingConventionValidationResult::Invalid;
+                    break;
+                }
+            }
+
+            result = ENamingConventionValidationResult::Valid;
+            break;
+        }
+    }
+
+    return result;
 }
 
 int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories /* = true */, bool show_if_no_failures /* = true */ ) const
