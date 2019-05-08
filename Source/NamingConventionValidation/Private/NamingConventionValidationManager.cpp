@@ -53,6 +53,17 @@ void UNamingConventionValidationManager::Initialize()
 
         ensureAlwaysMsgf( class_description.Class != nullptr, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
+
+    for ( auto & class_path : ExcludedClassPaths )
+    {
+        auto * excluded_class = class_path.TryLoadClass< UObject >();
+        ensureAlwaysMsgf( excluded_class != nullptr, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
+
+        if ( excluded_class != nullptr )
+        {
+            ExcludedClasses.Add( excluded_class );
+        }
+    }
 }
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
@@ -126,13 +137,18 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         }
 
         const auto result = IsAssetNamedCorrectly( asset_data );
-        ++num_files_checked;
 
         switch ( result )
         {
+            case ENamingConventionValidationResult::Excluded:
+            {
+                ++num_files_skipped;
+            }
+            break;
             case ENamingConventionValidationResult::Valid:
             {
                 ++num_valid_files;
+                ++num_files_checked;
             }
             break;
             case ENamingConventionValidationResult::Invalid:
@@ -141,6 +157,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
                     ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
                     ->AddToken( FTextToken::Create( LOCTEXT( "InvalidNamingConventionResult", "does not match naming convention." ) ) );
                 ++num_invalid_files;
+                ++num_files_checked;
             }
             break;
             case ENamingConventionValidationResult::Unknown:
@@ -155,6 +172,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
                         ->AddToken( FTextToken::Create( LOCTEXT( "UnknownNamingConventionResult", "has no known naming convention." ) ) )
                         ->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "UnknownClass", " Class = {ClassName}" ), arguments ) ) );
                 }
+                ++num_files_checked;
                 ++num_files_unable_to_validate;
             }
             break;
@@ -251,6 +269,14 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
     FSoftClassPath asset_class_path( asset_class.ToString() );
     if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
+        for ( auto * excluded_class : ExcludedClasses )
+        {
+            if ( asset_real_class->IsChildOf( excluded_class ) )
+            {
+                return ENamingConventionValidationResult::Excluded;
+            }
+        }
+
         bool found_type = false;
 
         for ( const auto & class_description : ClassDescriptions )

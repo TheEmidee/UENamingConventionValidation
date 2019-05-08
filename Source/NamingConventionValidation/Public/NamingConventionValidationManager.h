@@ -16,7 +16,8 @@ enum class ENamingConventionValidationResult : uint8
 {
     Invalid,
     Valid,
-    Unknown
+    Unknown,
+    Excluded
 };
 
 USTRUCT()
@@ -65,6 +66,12 @@ protected:
 
     UPROPERTY( config )
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
+
+    UPROPERTY( config )
+    TArray< FSoftClassPath > ExcludedClassPaths;
+
+    UPROPERTY( transient )
+    TArray< UClass * > ExcludedClasses;
 
     UPROPERTY( config )
     FString BlueprintsPrefix;
