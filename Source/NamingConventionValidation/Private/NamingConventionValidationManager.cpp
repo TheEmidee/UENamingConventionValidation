@@ -159,7 +159,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
             {
                 if ( show_if_no_failures )
                 {
-                    data_validation_log.Info()
+                    data_validation_log.Warning()
                         ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
                         ->AddToken( FTextToken::Create( LOCTEXT( "UnknownNamingConventionResult", "has no known naming convention." ) ) );
                 }
