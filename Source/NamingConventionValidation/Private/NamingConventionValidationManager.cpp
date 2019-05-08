@@ -72,6 +72,11 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const
 {
+    if ( IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
+    {
+        return ENamingConventionValidationResult::Excluded;
+    }   
+    
     static const FName
         native_parent_class_key( "NativeParentClass" ),
         native_class_key( "NativeClass" );
@@ -123,7 +128,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
 
     if ( show_if_no_failures )
     {
-        slow_task.MakeDialogDelayed( .1f );
+        slow_task.MakeDialogDelayed( 0.1f );
     }
 
     FMessageLog data_validation_log( "NamingConventionValidation" );
@@ -141,13 +146,6 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
     {
         slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Validating Naming Convention {0}" ), FText::FromString( asset_data.GetFullName() ) ) );
 
-        // Check exclusion path
-        if ( skip_excluded_directories && IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
-        {
-            ++num_files_skipped;
-            continue;
-
-        }
         FText error_message;
         const auto result = IsAssetNamedCorrectly( asset_data, error_message );
 
@@ -155,7 +153,11 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         {
             case ENamingConventionValidationResult::Excluded:
             {
-                ++num_files_skipped;
+                 data_validation_log.Info()
+                    ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
+                    ->AddToken( FTextToken::Create( LOCTEXT( "ExcludedNamingConventionResult", "has not been tested based on the configuration." ) ) );
+                 
+                 ++num_files_skipped;
             }
             break;
             case ENamingConventionValidationResult::Valid:
@@ -170,6 +172,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
                     ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
                     ->AddToken( FTextToken::Create( LOCTEXT( "InvalidNamingConventionResult", "does not match naming convention." ) ) )
                     ->AddToken( FTextToken::Create( error_message ) );
+                
                 ++num_invalid_files;
                 ++num_files_checked;
             }

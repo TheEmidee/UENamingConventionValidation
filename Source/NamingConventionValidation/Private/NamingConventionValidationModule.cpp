@@ -31,9 +31,9 @@ void LOCAL_OnPackageSaved( const FString & package_file_name, UObject * object )
 
 void LOCAL_ValidateAssets( TArray< FAssetData > selected_assets )
 {
-    if ( auto * naming_conventioon_validation_manager = UNamingConventionValidationManager::Get() )
+    if ( auto * naming_convention_validation_manager = UNamingConventionValidationManager::Get() )
     {
-        naming_conventioon_validation_manager->ValidateAssets( selected_assets, false );
+        naming_convention_validation_manager->ValidateAssets( selected_assets );
     }
 }
 
