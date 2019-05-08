@@ -115,7 +115,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         slow_task.MakeDialogDelayed( .1f );
     }
 
-    FMessageLog data_validation_log( "NamingConventionValidation " );
+    FMessageLog data_validation_log( "NamingConventionValidation" );
 
     int32 num_added = 0;
     int32 num_files_checked = 0;
