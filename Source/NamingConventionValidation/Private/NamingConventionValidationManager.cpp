@@ -70,7 +70,7 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 {
 }
 
-ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data ) const
+ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const
 {
     static const FName
         native_parent_class_key( "NativeParentClass" ),
@@ -84,20 +84,32 @@ ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNam
     {
         if ( !asset_data.GetTagValue( native_class_key, asset_class ) )
         {
-            asset_class = *( "/Script/Engine." + asset_data.AssetClass.ToString() );
+            if ( auto * asset = asset_data.GetAsset() )
+            {
+                FSoftClassPath class_path( asset->GetClass() );
+                asset_class = *class_path.ToString();
+            }
+            else
+            {
+                return ENamingConventionValidationResult::Unknown;
+            }
         }
     }
 
-    const auto result = DoesAssetMatchNameConvention( asset_name, asset_class );
+    const auto result = DoesAssetMatchNameConvention( asset_name, asset_class, error_message );
 
     if ( result == ENamingConventionValidationResult::Unknown )
     {
         static const FName blueprint_class_name( "Blueprint" );
         if ( asset_data.AssetClass == blueprint_class_name )
         {
-            return asset_name.StartsWith( BlueprintsPrefix )
-                       ? ENamingConventionValidationResult::Valid
-                       : ENamingConventionValidationResult::Invalid;
+            if ( asset_name.StartsWith( BlueprintsPrefix ) )
+            {
+                return ENamingConventionValidationResult::Valid;
+            }
+
+            error_message = FText::FromString( TEXT( "Generic blueprint assets must start with BP_" ) );
+            return ENamingConventionValidationResult::Invalid;
         }
     }
 
@@ -134,9 +146,10 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         {
             ++num_files_skipped;
             continue;
-        }
 
-        const auto result = IsAssetNamedCorrectly( asset_data );
+        }
+        FText error_message;
+        const auto result = IsAssetNamedCorrectly( asset_data, error_message );
 
         switch ( result )
         {
@@ -155,7 +168,8 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
             {
                 data_validation_log.Error()
                     ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
-                    ->AddToken( FTextToken::Create( LOCTEXT( "InvalidNamingConventionResult", "does not match naming convention." ) ) );
+                    ->AddToken( FTextToken::Create( LOCTEXT( "InvalidNamingConventionResult", "does not match naming convention." ) ) )
+                    ->AddToken( FTextToken::Create( error_message ) );
                 ++num_invalid_files;
                 ++num_files_checked;
             }
@@ -264,7 +278,7 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
 
 // -- PRIVATE
 
-ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class ) const
+ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class, FText & error_message ) const
 {
     FSoftClassPath asset_class_path( asset_class.ToString() );
     if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
@@ -277,19 +291,16 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
             }
         }
 
-        bool found_type = false;
-
         for ( const auto & class_description : ClassDescriptions )
         {
             if ( asset_real_class->IsChildOf( class_description.Class ) )
             {
-                found_type = true;
-
                 if ( !class_description.Prefix.IsEmpty() )
                 {
                     if ( !asset_name.StartsWith( class_description.Prefix ) )
                     {
-                        continue;
+                        error_message = FText::Format( LOCTEXT( "WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
+                        return ENamingConventionValidationResult::Invalid;
                     }
                 }
 
@@ -297,19 +308,13 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
                 {
                     if ( !asset_name.EndsWith( class_description.Suffix ) )
                     {
-                        continue;
+                        error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
+                        return ENamingConventionValidationResult::Invalid;
                     }
                 }
 
                 return ENamingConventionValidationResult::Valid;
             }
-        }
-
-        // If a type was found but Valid was not returned, the naming convention is broken
-        // Don't return Invalid as soon as a type is not validated because another more derived type might match
-        if ( found_type )
-        {
-            return ENamingConventionValidationResult::Invalid;
         }
     }
 

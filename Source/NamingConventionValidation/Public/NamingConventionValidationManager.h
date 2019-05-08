@@ -49,7 +49,7 @@ public:
     virtual void Initialize();
     virtual ~UNamingConventionValidationManager();
 
-    virtual ENamingConventionValidationResult IsAssetNamedCorrectly( const FAssetData & asset_data ) const;
+    virtual ENamingConventionValidationResult IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const;
     virtual int32 ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
     virtual void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;
     virtual void ValidateSavedPackage( FName package_name );
@@ -79,7 +79,7 @@ protected:
     TArray< FName > SavedPackagesToValidate;
 
 private:
-    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class ) const;
+    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class, FText & error_message ) const;
 
     UPROPERTY( config )
     FSoftClassPath NamingConventionValidationManagerClassName;
