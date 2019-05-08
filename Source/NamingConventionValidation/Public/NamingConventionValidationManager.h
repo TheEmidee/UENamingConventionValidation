@@ -25,7 +25,10 @@ struct FNamingConventionValidationClassDescription
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY( config )
-    FName ClassName;
+    FSoftClassPath ClassPath;
+
+    UPROPERTY( transient )
+    UClass * Class;
 
     UPROPERTY( config )
     FString Prefix;
@@ -63,9 +66,14 @@ protected:
     UPROPERTY( config )
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
 
+    UPROPERTY( config )
+    FString BlueprintsPrefix;
+
     TArray< FName > SavedPackagesToValidate;
 
 private:
+    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class ) const;
+
     UPROPERTY( config )
     FSoftClassPath NamingConventionValidationManagerClassName;
 };

@@ -1,5 +1,3 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
-
 #include "NamingConventionValidationManager.h"
 
 #include "AssetRegistryModule.h"
@@ -19,6 +17,7 @@ UNamingConventionValidationManager::UNamingConventionValidationManager( const FO
 {
     NamingConventionValidationManagerClassName = FSoftClassPath( TEXT( "/Script/NamingConventionValidation.NamingConventionValidationManager" ) );
     bValidateOnSave = true;
+    BlueprintsPrefix = "BP_";
 }
 
 UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
@@ -31,9 +30,9 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
 
         GNamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
-        checkf( GNamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) )
+        checkf( GNamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
 
-            GNamingConventionValidationManager->AddToRoot();
+        GNamingConventionValidationManager->AddToRoot();
         GNamingConventionValidationManager->Initialize();
     }
 
@@ -47,6 +46,13 @@ void UNamingConventionValidationManager::Initialize()
 
     FMessageLogModule & message_log_module = FModuleManager::LoadModuleChecked< FMessageLogModule >( "MessageLog" );
     message_log_module.RegisterLogListing( "NamingConventionValidation", LOCTEXT( "NamingConventionValidation", "Naming Convention Validation" ), init_options );
+
+    for ( auto & class_description : ClassDescriptions )
+    {
+        class_description.Class = class_description.ClassPath.TryLoadClass< UObject >();
+
+        ensureAlwaysMsgf( class_description.Class != nullptr, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
+    }
 }
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
@@ -55,50 +61,32 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data ) const
 {
-    auto result = ENamingConventionValidationResult::Unknown;
-    static const FName blueprint_class_name( "Blueprint" );
+    static const FName
+        native_parent_class_key( "NativeParentClass" ),
+        native_class_key( "NativeClass" );
 
-    auto asset_class = asset_data.AssetClass;
+    const auto asset_name = asset_data.AssetName.ToString();
 
-    if ( asset_data.AssetClass == blueprint_class_name )
+    FName asset_class;
+
+    if ( !asset_data.GetTagValue( native_parent_class_key, asset_class ) )
     {
-        static const FName key( "NativeParentClass" );
-
-        if ( asset_data.GetTagValue( key, asset_class ) )
+        if ( !asset_data.GetTagValue( native_class_key, asset_class ) )
         {
-            auto asset_class_str = asset_class.ToString();
-            asset_class_str.RemoveFromStart( "Class'/Script/" );
-            asset_class_str.RemoveFromEnd( "'" );
-            asset_class = *asset_class_str;
+            asset_class = *( "/Script/Engine." + asset_data.AssetClass.ToString() );
         }
     }
 
-    for ( const auto & class_description : ClassDescriptions )
+    const auto result = DoesAssetMatchNameConvention( asset_name, asset_class );
+
+    if ( result == ENamingConventionValidationResult::Unknown )
     {
-        if ( class_description.ClassName == asset_class )
+        static const FName blueprint_class_name( "Blueprint" );
+        if ( asset_data.AssetClass == blueprint_class_name )
         {
-            const auto asset_name = asset_data.AssetName.ToString();
-
-            if ( !class_description.Prefix.IsEmpty() )
-            {
-                if ( !asset_name.StartsWith( class_description.Prefix ) )
-                {
-                    result = ENamingConventionValidationResult::Invalid;
-                    break;
-                }
-            }
-
-            if ( !class_description.Suffix.IsEmpty() )
-            {
-                if ( !asset_name.EndsWith( class_description.Suffix ) )
-                {
-                    result = ENamingConventionValidationResult::Invalid;
-                    break;
-                }
-            }
-
-            result = ENamingConventionValidationResult::Valid;
-            break;
+            return asset_name.StartsWith( BlueprintsPrefix )
+                       ? ENamingConventionValidationResult::Valid
+                       : ENamingConventionValidationResult::Invalid;
         }
     }
 
@@ -159,9 +147,13 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
             {
                 if ( show_if_no_failures )
                 {
+                    FFormatNamedArguments arguments;
+                    arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClass.ToString() ) );
+
                     data_validation_log.Warning()
                         ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
-                        ->AddToken( FTextToken::Create( LOCTEXT( "UnknownNamingConventionResult", "has no known naming convention." ) ) );
+                        ->AddToken( FTextToken::Create( LOCTEXT( "UnknownNamingConventionResult", "has no known naming convention." ) ) )
+                        ->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "UnknownClass", " Class = {ClassName}" ), arguments ) ) );
                 }
                 ++num_files_unable_to_validate;
             }
@@ -250,6 +242,52 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
     ValidateOnSave( assets );
 
     SavedPackagesToValidate.Empty();
+}
+
+// -- PRIVATE
+
+ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class ) const
+{
+    FSoftClassPath asset_class_path( asset_class.ToString() );
+    if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
+    {
+        bool found_type = false;
+
+        for ( const auto & class_description : ClassDescriptions )
+        {
+            if ( asset_real_class->IsChildOf( class_description.Class ) )
+            {
+                found_type = true;
+
+                if ( !class_description.Prefix.IsEmpty() )
+                {
+                    if ( !asset_name.StartsWith( class_description.Prefix ) )
+                    {
+                        continue;
+                    }
+                }
+
+                if ( !class_description.Suffix.IsEmpty() )
+                {
+                    if ( !asset_name.EndsWith( class_description.Suffix ) )
+                    {
+                        continue;
+                    }
+                }
+
+                return ENamingConventionValidationResult::Valid;
+            }
+        }
+
+        // If a type was found but Valid was not returned, the naming convention is broken
+        // Don't return Invalid as soon as a type is not validated because another more derived type might match
+        if ( found_type )
+        {
+            return ENamingConventionValidationResult::Invalid;
+        }
+    }
+
+    return ENamingConventionValidationResult::Unknown;
 }
 
 #undef LOCTEXT_NAMESPACE
