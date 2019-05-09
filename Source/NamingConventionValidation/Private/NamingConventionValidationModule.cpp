@@ -4,6 +4,7 @@
 #include "NamingConventionValidationManager.h"
 
 #include <AssetRegistryModule.h>
+#include <AssetToolsModule.h>
 #include <ContentBrowserDelegates.h>
 #include <ContentBrowserModule.h>
 #include <EditorStyleSet.h>
@@ -37,6 +38,14 @@ void LOCAL_ValidateAssets( TArray< FAssetData > selected_assets )
     }
 }
 
+void LOCAL_RenameAssets( TArray< FAssetData > selected_assets )
+{
+    if ( auto * naming_convention_validation_manager = UNamingConventionValidationManager::Get() )
+    {
+        naming_convention_validation_manager->RenameAssets( selected_assets );
+    }
+}
+
 void LOCAL_ValidateFolders( TArray< FString > selected_folders )
 {
     FAssetRegistryModule & asset_registry_module = FModuleManager::Get().LoadModuleChecked< FAssetRegistryModule >( TEXT( "AssetRegistry" ) );
@@ -63,6 +72,11 @@ void LOCAL_CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_buil
         LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Runs naming convention validation on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( LOCAL_ValidateAssets, selected_assets ) ) );
+    menu_builder.AddMenuEntry(
+        LOCTEXT( "NamingConventionRenameAssetsTabTitle", "Rename Assets following Naming Convention" ),
+        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Runs a renaming following the naming convention on these assets." ),
+        FSlateIcon(),
+        FUIAction( FExecuteAction::CreateStatic( LOCAL_RenameAssets, selected_assets ) ) );
 }
 
 TSharedRef< FExtender > LOCAL_OnExtendContentBrowserAssetSelectionMenu( const TArray< FAssetData > & selected_assets )

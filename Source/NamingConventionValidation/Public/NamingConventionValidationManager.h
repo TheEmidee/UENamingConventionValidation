@@ -53,6 +53,7 @@ public:
     virtual int32 ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
     virtual void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;
     virtual void ValidateSavedPackage( FName package_name );
+    virtual int32 RenameAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
 
 protected:
     virtual bool IsPathExcludedFromValidation( const FString & path ) const;
@@ -79,7 +80,9 @@ protected:
     TArray< FName > SavedPackagesToValidate;
 
 private:
-    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FString & asset_name, const FName asset_class, FText & error_message ) const;
+    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const;
+    void GetRenamedAssetSoftObjectPath( FSoftObjectPath & renamed_soft_object_path, const FAssetData & asset_data ) const;
+    bool TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data ) const;
 
     UPROPERTY( config )
     FSoftClassPath NamingConventionValidationManagerClassName;
