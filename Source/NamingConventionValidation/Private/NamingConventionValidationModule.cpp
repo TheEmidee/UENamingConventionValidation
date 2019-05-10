@@ -110,6 +110,24 @@ void LOCAL_ValidateFolders( TArray< FString > selected_folders )
     LOCAL_ValidateAssets( asset_list );
 }
 
+void LOCAL_RenameInFolders( TArray< FString > selected_folders )
+{
+    FAssetRegistryModule & asset_registry_module = FModuleManager::Get().LoadModuleChecked< FAssetRegistryModule >( TEXT( "AssetRegistry" ) );
+
+    FARFilter filter;
+    filter.bRecursivePaths = true;
+
+    for ( const auto & folder : selected_folders )
+    {
+        filter.PackagePaths.Emplace( *folder );
+    }
+
+    TArray< FAssetData > asset_list;
+    asset_registry_module.Get().GetAssets( filter, asset_list );
+
+    LOCAL_RenameAssets( asset_list, false );
+}
+
 void LOCAL_CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, TArray< FAssetData > selected_assets )
 {
     menu_builder.AddMenuSeparator();
@@ -150,6 +168,11 @@ void LOCAL_CreateDataValidationContentBrowserPathMenu( FMenuBuilder & menu_build
         LOCTEXT( "NamingConventionValidateAssetsPathTooltipText", "Runs naming convention validation on the assets in the selected folder." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( LOCAL_ValidateFolders, selected_paths ) ) );
+    menu_builder.AddMenuEntry(
+        LOCTEXT( "NamingConventionRenameAssetsPathTabTitle", "Renaming assets following Assets Naming Convention in Folder" ),
+        LOCTEXT( "NamingConventionRenameAssetsPathTooltipText", "Runs naming convention validation on the assets in the selected folder." ),
+        FSlateIcon(),
+        FUIAction( FExecuteAction::CreateStatic( LOCAL_RenameInFolders, selected_paths ) ) );
 }
 
 TSharedRef< FExtender > LOCAL_OnExtendContentBrowserPathSelectionMenu( const TArray< FString > & selected_paths )
