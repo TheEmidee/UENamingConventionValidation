@@ -66,6 +66,11 @@ void UNamingConventionValidationManager::Initialize()
             ExcludedClasses.Add( excluded_class );
         }
     }
+
+    static const FDirectoryPath 
+        engine_directory_path( { TEXT( "/Engine/" ) } );
+    
+    ExcludedDirectories.Add( engine_directory_path );
 }
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
