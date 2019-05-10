@@ -19,6 +19,39 @@
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationModule"
 
+void LOCAL_FindAssetDependencies( const FAssetRegistryModule & asset_registry_module, const FAssetData & asset_data, TSet< FAssetData > & dependent_assets )
+{
+    if ( asset_data.IsValid() )
+    {
+        if ( UObject * object = asset_data.GetAsset() )
+        {
+            const FName selected_package_name = object->GetOutermost()->GetFName();
+            FString package_string = selected_package_name.ToString();
+            FString object_string = FString::Printf( TEXT( "%s.%s" ), *package_string, *FPackageName::GetLongPackageAssetName( package_string ) );
+
+            if ( !dependent_assets.Contains( asset_data ) )
+            {
+                dependent_assets.Add( asset_data );
+
+                TArray< FName > dependencies;
+                asset_registry_module.Get().GetDependencies( selected_package_name, dependencies, EAssetRegistryDependencyType::Packages );
+
+                for ( const FName dependency : dependencies )
+                {
+                    const FString dependency_package_string = dependency.ToString();
+                    FString dependency_object_string = FString::Printf( TEXT( "%s.%s" ), *dependency_package_string, *FPackageName::GetLongPackageAssetName( dependency_package_string ) );
+
+                    // recurse on each dependency
+                    FName object_path( *dependency_object_string );
+                    FAssetData dependent_asset = asset_registry_module.Get().GetAssetByObjectPath( object_path );
+
+                    LOCAL_FindAssetDependencies( asset_registry_module, dependent_asset, dependent_assets );
+                }
+            }
+        }
+    }
+}
+
 void LOCAL_OnPackageSaved( const FString & package_file_name, UObject * object )
 {
     if ( auto * manager = UNamingConventionValidationManager::Get() )
@@ -38,10 +71,23 @@ void LOCAL_ValidateAssets( TArray< FAssetData > selected_assets )
     }
 }
 
-void LOCAL_RenameAssets( TArray< FAssetData > selected_assets )
+void LOCAL_RenameAssets( TArray< FAssetData > selected_assets, bool include_dependencies )
 {
     if ( auto * naming_convention_validation_manager = UNamingConventionValidationManager::Get() )
     {
+        TSet< FAssetData > dependent_assets;
+        if ( include_dependencies )
+        {
+            const FAssetRegistryModule & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
+
+            for ( const FAssetData & asset_data : selected_assets )
+            {
+                LOCAL_FindAssetDependencies( asset_registry_module, asset_data, dependent_assets );
+            }
+
+            selected_assets = dependent_assets.Array();
+        }
+
         naming_convention_validation_manager->RenameAssets( selected_assets );
     }
 }
@@ -76,7 +122,12 @@ void LOCAL_CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_buil
         LOCTEXT( "NamingConventionRenameAssetsTabTitle", "Rename Assets following Naming Convention" ),
         LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Runs a renaming following the naming convention on these assets." ),
         FSlateIcon(),
-        FUIAction( FExecuteAction::CreateStatic( LOCAL_RenameAssets, selected_assets ) ) );
+        FUIAction( FExecuteAction::CreateStatic( LOCAL_RenameAssets, selected_assets, false ) ) );
+    menu_builder.AddMenuEntry(
+        LOCTEXT( "NamingConventionRenameAssetsInFolderTabTitle", "Rename Assets following Naming Convention, and all their dependencies" ),
+        LOCTEXT( "NamingConventionRenameAssetsInFolderTooltipText", "Runs a renaming following the naming convention on these assets and their dependencies." ),
+        FSlateIcon(),
+        FUIAction( FExecuteAction::CreateStatic( LOCAL_RenameAssets, selected_assets, true ) ) );
 }
 
 TSharedRef< FExtender > LOCAL_OnExtendContentBrowserAssetSelectionMenu( const TArray< FAssetData > & selected_assets )
