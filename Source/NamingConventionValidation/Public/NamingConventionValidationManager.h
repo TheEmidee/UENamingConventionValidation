@@ -25,6 +25,16 @@ struct FNamingConventionValidationClassDescription
 {
     GENERATED_USTRUCT_BODY()
 
+    FNamingConventionValidationClassDescription() :
+        Class( nullptr ),
+        Priority( 0 )
+    {}
+
+    bool operator<( const FNamingConventionValidationClassDescription & other ) const
+    {
+        return Priority > other.Priority;
+    }
+
     UPROPERTY( config )
     FSoftClassPath ClassPath;
 
@@ -36,6 +46,9 @@ struct FNamingConventionValidationClassDescription
 
     UPROPERTY( config )
     FString Suffix;
+
+    UPROPERTY( config )
+    int Priority;
 };
 
 UCLASS( config = Editor )

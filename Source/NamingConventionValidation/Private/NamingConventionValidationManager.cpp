@@ -56,6 +56,8 @@ void UNamingConventionValidationManager::Initialize()
         ensureAlwaysMsgf( class_description.Class != nullptr, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
 
+    ClassDescriptions.Sort();
+
     for ( auto & class_path : ExcludedClassPaths )
     {
         auto * excluded_class = class_path.TryLoadClass< UObject >();
