@@ -26,8 +26,7 @@ void LOCAL_FindAssetDependencies( const FAssetRegistryModule & asset_registry_mo
         if ( UObject * object = asset_data.GetAsset() )
         {
             const FName selected_package_name = object->GetOutermost()->GetFName();
-            FString package_string = selected_package_name.ToString();
-            FString object_string = FString::Printf( TEXT( "%s.%s" ), *package_string, *FPackageName::GetLongPackageAssetName( package_string ) );
+            const auto package_string = selected_package_name.ToString();
 
             if ( !dependent_assets.Contains( asset_data ) )
             {
@@ -42,7 +41,7 @@ void LOCAL_FindAssetDependencies( const FAssetRegistryModule & asset_registry_mo
                     FString dependency_object_string = FString::Printf( TEXT( "%s.%s" ), *dependency_package_string, *FPackageName::GetLongPackageAssetName( dependency_package_string ) );
 
                     // recurse on each dependency
-                    FName object_path( *dependency_object_string );
+                    const FName object_path( *dependency_object_string );
                     FAssetData dependent_asset = asset_registry_module.Get().GetAssetByObjectPath( object_path );
 
                     LOCAL_FindAssetDependencies( asset_registry_module, dependent_asset, dependent_assets );

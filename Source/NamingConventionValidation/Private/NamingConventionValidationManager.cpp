@@ -26,7 +26,7 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
     if ( GNamingConventionValidationManager == nullptr )
     {
-        FSoftClassPath naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
+        const FSoftClassPath naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
 
         UClass * singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
@@ -357,7 +357,7 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
     FAssetRegistryModule & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
     TArray< FAssetData > assets;
 
-    for ( FName package_name : SavedPackagesToValidate )
+    for ( const auto package_name : SavedPackagesToValidate )
     {
         // We need to query the in-memory data as the disk cache may not be accurate
         asset_registry_module.Get().GetAssetsByPackageName( package_name, assets );
@@ -373,7 +373,7 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
 ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const
 {
     const auto asset_name = asset_data.AssetName.ToString();
-    FSoftClassPath asset_class_path( asset_class.ToString() );
+    const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
@@ -429,7 +429,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
 
 void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObjectPath & renamed_soft_object_path, const FAssetData & asset_data ) const
 {
-    FSoftObjectPath path = asset_data.ToSoftObjectPath();
+    const FSoftObjectPath path = asset_data.ToSoftObjectPath();
     FName asset_class;
 
     // /Game/Levels/Props/Meshes/1M_Cube.1M_Cube
@@ -439,7 +439,7 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
     FString renamed_name = path.GetAssetName();
 
     const auto asset_name = asset_data.AssetName.ToString();
-    FSoftClassPath asset_class_path( asset_class.ToString() );
+    const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
@@ -491,7 +491,7 @@ bool UNamingConventionValidationManager::TryGetAssetDataRealClass( FName & asset
         {
             if ( auto * asset = asset_data.GetAsset() )
             {
-                FSoftClassPath class_path( asset->GetClass() );
+                const FSoftClassPath class_path( asset->GetClass() );
                 asset_class = *class_path.ToString();
             }
             else
