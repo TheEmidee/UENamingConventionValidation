@@ -12,6 +12,31 @@
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationManager"
 
+bool LOCAL_TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data )
+{
+    static const FName
+        native_parent_class_key( "NativeParentClass" ),
+        native_class_key( "NativeClass" );
+
+    if ( !asset_data.GetTagValue( native_parent_class_key, asset_class ) )
+    {
+        if ( !asset_data.GetTagValue( native_class_key, asset_class ) )
+        {
+            if ( auto * asset = asset_data.GetAsset() )
+            {
+                const FSoftClassPath class_path( asset->GetClass() );
+                asset_class = *class_path.ToString();
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 UNamingConventionValidationManager * GNamingConventionValidationManager = nullptr;
 
 UNamingConventionValidationManager::UNamingConventionValidationManager( const FObjectInitializer & object_initializer ) :
@@ -87,7 +112,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNam
     }
 
     FName asset_class;
-    if ( !TryGetAssetDataRealClass( asset_class, asset_data ) )
+    if ( !LOCAL_TryGetAssetDataRealClass( asset_class, asset_data ) )
     {
         return ENamingConventionValidationResult::Unknown;
     }
@@ -433,7 +458,7 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
     FName asset_class;
 
     // /Game/Levels/Props/Meshes/1M_Cube.1M_Cube
-    TryGetAssetDataRealClass( asset_class, asset_data );
+    LOCAL_TryGetAssetDataRealClass( asset_class, asset_data );
 
     FString renamed_path = FPaths::GetPath( path.GetLongPackageName() );
     FString renamed_name = path.GetAssetName();
@@ -477,31 +502,6 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
     renamed_path.Append( renamed_name );
 
     renamed_soft_object_path.SetPath( renamed_path );
-}
-
-bool UNamingConventionValidationManager::TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data ) const
-{
-    static const FName
-        native_parent_class_key( "NativeParentClass" ),
-        native_class_key( "NativeClass" );
-
-    if ( !asset_data.GetTagValue( native_parent_class_key, asset_class ) )
-    {
-        if ( !asset_data.GetTagValue( native_class_key, asset_class ) )
-        {
-            if ( auto * asset = asset_data.GetAsset() )
-            {
-                const FSoftClassPath class_path( asset->GetClass() );
-                asset_class = *class_path.ToString();
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
 }
 
 #undef LOCTEXT_NAMESPACE

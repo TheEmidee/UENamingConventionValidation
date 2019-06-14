@@ -95,7 +95,6 @@ protected:
 private:
     ENamingConventionValidationResult DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const;
     void GetRenamedAssetSoftObjectPath( FSoftObjectPath & renamed_soft_object_path, const FAssetData & asset_data ) const;
-    bool TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data ) const;
 
     UPROPERTY( config )
     FSoftClassPath NamingConventionValidationManagerClassName;
