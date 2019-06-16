@@ -2,7 +2,6 @@
 
 #include <AssetRegistryModule.h>
 #include <AssetToolsModule.h>
-#include <CoreGlobals.h>
 #include <Developer/MessageLog/Public/MessageLogModule.h>
 #include <Editor.h>
 #include <IAssetTools.h>
@@ -51,9 +50,9 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
     if ( GNamingConventionValidationManager == nullptr )
     {
-        const FSoftClassPath naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
+        const auto naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
 
-        UClass * singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
+        const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
 
         GNamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
@@ -71,7 +70,7 @@ void UNamingConventionValidationManager::Initialize()
     FMessageLogInitializationOptions init_options;
     init_options.bShowFilters = true;
 
-    FMessageLogModule & message_log_module = FModuleManager::LoadModuleChecked< FMessageLogModule >( "MessageLog" );
+    auto & message_log_module = FModuleManager::LoadModuleChecked< FMessageLogModule >( "MessageLog" );
     message_log_module.RegisterLogListing( "NamingConventionValidation", LOCTEXT( "NamingConventionValidation", "Naming Convention Validation" ), init_options );
 
     for ( auto & class_description : ClassDescriptions )
@@ -132,16 +131,15 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
 
     FMessageLog data_validation_log( "NamingConventionValidation" );
 
-    int32 num_added = 0;
-    int32 num_files_checked = 0;
-    int32 num_valid_files = 0;
-    int32 num_invalid_files = 0;
-    int32 num_files_skipped = 0;
-    int32 num_files_unable_to_validate = 0;
+    auto num_files_checked = 0;
+    auto num_valid_files = 0;
+    auto num_invalid_files = 0;
+    auto num_files_skipped = 0;
+    auto num_files_unable_to_validate = 0;
 
     const auto num_files_to_validate = asset_data_list.Num();
 
-    for ( const FAssetData & asset_data : asset_data_list )
+    for ( const auto & asset_data : asset_data_list )
     {
         slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Validating Naming Convention {0}" ), FText::FromString( asset_data.GetFullName() ) ) );
 
@@ -259,15 +257,14 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
 
     FMessageLog data_validation_log( "NamingConventionValidation" );
 
-    int32 num_added = 0;
-    int32 num_files_checked = 0;
-    int32 num_files_renamed = 0;
-    int32 num_files_skipped = 0;
-    int32 num_files_failed = 0;
+    auto num_files_checked = 0;
+    auto num_files_renamed = 0;
+    auto num_files_skipped = 0;
+    auto num_files_failed = 0;
 
     const auto num_files_to_validate = asset_data_list.Num();
 
-    for ( const FAssetData & asset_data : asset_data_list )
+    for ( const auto & asset_data : asset_data_list )
     {
         slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Renaming following Naming Convention {0}" ), FText::FromString( asset_data.GetFullName() ) ) );
 
