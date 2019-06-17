@@ -6,6 +6,7 @@
 #include <AssetRegistryModule.h>
 #include <IAssetRegistry.h>
 
+// ReSharper disable once CppInconsistentNaming
 DEFINE_LOG_CATEGORY_STATIC( LogNamingConventionValidation, Warning, All );
 
 UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet( const FObjectInitializer & object_initializer )
@@ -50,6 +51,7 @@ bool UNamingConventionValidationCommandlet::ValidateData()
     UNamingConventionValidationManager * naming_convention_validation_manager = UNamingConventionValidationManager::Get();
     check( naming_convention_validation_manager );
 
+    // ReSharper disable once CppExpressionWithoutSideEffects
     naming_convention_validation_manager->ValidateAssets( asset_data_list );
 
     return true;
