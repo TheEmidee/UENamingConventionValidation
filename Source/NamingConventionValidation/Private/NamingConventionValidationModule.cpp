@@ -50,7 +50,7 @@ void LOCAL_FindAssetDependencies( const FAssetRegistryModule & asset_registry_mo
     }
 }
 
-void LOCAL_OnPackageSaved( const FString & package_file_name, UObject * object )
+void LOCAL_OnPackageSaved( const FString & /*package_file_name*/, UObject * object )
 {
     if ( auto * manager = UNamingConventionValidationManager::Get() )
     {
