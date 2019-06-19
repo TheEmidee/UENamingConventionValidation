@@ -9,20 +9,19 @@
 // ReSharper disable once CppInconsistentNaming
 DEFINE_LOG_CATEGORY_STATIC( LogNamingConventionValidation, Warning, All );
 
-UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet( const FObjectInitializer & object_initializer )
-    : Super( object_initializer )
+UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet()
 {
     LogToConsole = false;
 }
 
-int32 UNamingConventionValidationCommandlet::Main( const FString & full_command_line )
+int32 UNamingConventionValidationCommandlet::Main( const FString & params )
 {
     UE_LOG( LogNamingConventionValidation, Log, TEXT( "--------------------------------------------------------------------------------------------" ) );
     UE_LOG( LogNamingConventionValidation, Log, TEXT( "Running NamingConventionValidation Commandlet" ) );
     TArray< FString > tokens;
     TArray< FString > switches;
-    TMap< FString, FString > params;
-    ParseCommandLine( *full_command_line, tokens, switches, params );
+    TMap< FString, FString > params_map;
+    ParseCommandLine( *params, tokens, switches, params_map );
 
     // validate data
     if ( !ValidateData() )

@@ -8,10 +8,11 @@
 UCLASS( CustomConstructor )
 class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationCommandlet : public UCommandlet
 {
-    GENERATED_UCLASS_BODY()
+    GENERATED_BODY()
 
 public:
-    UNamingConventionValidationCommandlet( const FObjectInitializer & object_initializer );
+
+    UNamingConventionValidationCommandlet();
 
     // Begin UCommandlet Interface
     int32 Main( const FString & params ) override;

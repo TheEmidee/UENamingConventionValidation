@@ -119,7 +119,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNam
     return DoesAssetMatchNameConvention( asset_data, asset_class, error_message );
 }
 
-int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories /* = true */, bool show_if_no_failures /* = true */ ) const
+int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetData > & asset_data_list, bool /*skip_excluded_directories*/ /* = true */, bool show_if_no_failures /* = true */ ) const
 {
     FScopedSlowTask slow_task( 1.0f, LOCTEXT( "NamingConventionValidatingDataTask", "Validating Naming Convention..." ) );
     slow_task.Visibility = show_if_no_failures ? ESlowTaskVisibility::ForceVisible : ESlowTaskVisibility::Invisible;
@@ -233,7 +233,7 @@ void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetDat
     }
 }
 
-void UNamingConventionValidationManager::ValidateSavedPackage( FName package_name )
+void UNamingConventionValidationManager::ValidateSavedPackage( const FName package_name )
 {
     if ( !bValidateOnSave || GEditor->IsAutosaving() )
     {
@@ -245,7 +245,7 @@ void UNamingConventionValidationManager::ValidateSavedPackage( FName package_nam
     GEditor->GetTimerManager()->SetTimerForNextTick( this, &UNamingConventionValidationManager::ValidateAllSavedPackages );
 }
 
-int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories, bool show_if_no_failures ) const
+int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData > & asset_data_list, bool /*skip_excluded_directories*/, bool show_if_no_failures ) const
 {
     FScopedSlowTask slow_task( 1.0f, LOCTEXT( "NamingConventionValidatingDataTask", "Renaming following Naming Convention..." ) );
     slow_task.Visibility = show_if_no_failures ? ESlowTaskVisibility::ForceVisible : ESlowTaskVisibility::Invisible;
