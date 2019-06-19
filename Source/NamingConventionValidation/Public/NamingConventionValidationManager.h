@@ -76,7 +76,7 @@ protected:
     TArray< FDirectoryPath > ExcludedDirectories;
 
     UPROPERTY( config )
-    bool bValidateOnSave;
+    bool DoesValidateOnSave;
 
     UPROPERTY( config )
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;

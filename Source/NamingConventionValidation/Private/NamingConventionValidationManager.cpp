@@ -14,12 +14,12 @@
 bool LOCAL_TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data )
 {
     static const FName
-        native_parent_class_key( "NativeParentClass" ),
-        native_class_key( "NativeClass" );
+        NativeParentClassKey( "NativeParentClass" ),
+        NativeClassKey( "NativeClass" );
 
-    if ( !asset_data.GetTagValue( native_parent_class_key, asset_class ) )
+    if ( !asset_data.GetTagValue( NativeParentClassKey, asset_class ) )
     {
-        if ( !asset_data.GetTagValue( native_class_key, asset_class ) )
+        if ( !asset_data.GetTagValue( NativeClassKey, asset_class ) )
         {
             if ( auto * asset = asset_data.GetAsset() )
             {
@@ -36,33 +36,33 @@ bool LOCAL_TryGetAssetDataRealClass( FName & asset_class, const FAssetData & ass
     return true;
 }
 
-UNamingConventionValidationManager * GNamingConventionValidationManager = nullptr;
+UNamingConventionValidationManager * LOCAL_NamingConventionValidationManager = nullptr;
 
 UNamingConventionValidationManager::UNamingConventionValidationManager( const FObjectInitializer & object_initializer ) :
     Super( object_initializer )
 {
     NamingConventionValidationManagerClassName = FSoftClassPath( TEXT( "/Script/NamingConventionValidation.NamingConventionValidationManager" ) );
-    bValidateOnSave = true;
+    DoesValidateOnSave = true;
     BlueprintsPrefix = "BP_";
 }
 
 UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
-    if ( GNamingConventionValidationManager == nullptr )
+    if ( LOCAL_NamingConventionValidationManager == nullptr )
     {
         const auto naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
 
         const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
 
-        GNamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
-        checkf( GNamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
+        LOCAL_NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
+        checkf( LOCAL_NamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
 
-        GNamingConventionValidationManager->AddToRoot();
-        GNamingConventionValidationManager->Initialize();
+        LOCAL_NamingConventionValidationManager->AddToRoot();
+        LOCAL_NamingConventionValidationManager->Initialize();
     }
 
-    return GNamingConventionValidationManager;
+    return LOCAL_NamingConventionValidationManager;
 }
 
 void UNamingConventionValidationManager::Initialize()
@@ -94,9 +94,9 @@ void UNamingConventionValidationManager::Initialize()
     }
 
     static const FDirectoryPath 
-        engine_directory_path( { TEXT( "/Engine/" ) } );
+        EngineDirectoryPath( { TEXT( "/Engine/" ) } );
     
-    ExcludedDirectories.Add( engine_directory_path );
+    ExcludedDirectories.Add( EngineDirectoryPath );
 }
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
@@ -217,7 +217,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
 
 void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const
 {
-    if ( !bValidateOnSave || GEditor->IsAutosaving() )
+    if ( !DoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -235,7 +235,7 @@ void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetDat
 
 void UNamingConventionValidationManager::ValidateSavedPackage( const FName package_name )
 {
-    if ( !bValidateOnSave || GEditor->IsAutosaving() )
+    if ( !DoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -363,9 +363,9 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
 
 bool UNamingConventionValidationManager::IsPathExcludedFromValidation( const FString & path ) const
 {
-    for ( const FDirectoryPath & ExcludedPath : ExcludedDirectories )
+    for ( const FDirectoryPath & excluded_path : ExcludedDirectories )
     {
-        if ( path.Contains( ExcludedPath.Path ) )
+        if ( path.Contains( excluded_path.Path ) )
         {
             return true;
         }
@@ -434,8 +434,8 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
         }
     }
 
-    static const FName blueprint_class_name( "Blueprint" );
-    if ( asset_data.AssetClass == blueprint_class_name )
+    static const FName BlueprintClassName( "Blueprint" );
+    if ( asset_data.AssetClass == BlueprintClassName )
     {
         if ( !asset_name.StartsWith( BlueprintsPrefix ) )
         {
@@ -486,8 +486,8 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
 
     if ( renamed_name == path.GetAssetName() )
     {
-        static const FName blueprint_class_name( "Blueprint" );
-        if ( asset_data.AssetClass == blueprint_class_name )
+        static const FName BlueprintClassName( "Blueprint" );
+        if ( asset_data.AssetClass == BlueprintClassName )
         {
             renamed_name.InsertAt( 0, BlueprintsPrefix );
         }
