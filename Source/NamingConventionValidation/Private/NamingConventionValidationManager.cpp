@@ -11,7 +11,7 @@
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationManager"
 
-bool LOCAL_TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data )
+bool TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_data )
 {
     static const FName
         NativeParentClassKey( "NativeParentClass" ),
@@ -36,7 +36,7 @@ bool LOCAL_TryGetAssetDataRealClass( FName & asset_class, const FAssetData & ass
     return true;
 }
 
-UNamingConventionValidationManager * LOCAL_NamingConventionValidationManager = nullptr;
+UNamingConventionValidationManager * NamingConventionValidationManager = nullptr;
 
 UNamingConventionValidationManager::UNamingConventionValidationManager( const FObjectInitializer & object_initializer ) :
     Super( object_initializer )
@@ -48,21 +48,21 @@ UNamingConventionValidationManager::UNamingConventionValidationManager( const FO
 
 UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
-    if ( LOCAL_NamingConventionValidationManager == nullptr )
+    if ( NamingConventionValidationManager == nullptr )
     {
         const auto naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
 
         const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
 
-        LOCAL_NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
-        checkf( LOCAL_NamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
+        NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
+        checkf( NamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
 
-        LOCAL_NamingConventionValidationManager->AddToRoot();
-        LOCAL_NamingConventionValidationManager->Initialize();
+        NamingConventionValidationManager->AddToRoot();
+        NamingConventionValidationManager->Initialize();
     }
 
-    return LOCAL_NamingConventionValidationManager;
+    return NamingConventionValidationManager;
 }
 
 void UNamingConventionValidationManager::Initialize()
@@ -111,7 +111,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNam
     }
 
     FName asset_class;
-    if ( !LOCAL_TryGetAssetDataRealClass( asset_class, asset_data ) )
+    if ( !TryGetAssetDataRealClass( asset_class, asset_data ) )
     {
         return ENamingConventionValidationResult::Unknown;
     }
@@ -455,7 +455,7 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
     FName asset_class;
 
     // /Game/Levels/Props/Meshes/1M_Cube.1M_Cube
-    LOCAL_TryGetAssetDataRealClass( asset_class, asset_data );
+    TryGetAssetDataRealClass( asset_class, asset_data );
 
     FString renamed_path = FPaths::GetPath( path.GetLongPackageName() );
     FString renamed_name = path.GetAssetName();
