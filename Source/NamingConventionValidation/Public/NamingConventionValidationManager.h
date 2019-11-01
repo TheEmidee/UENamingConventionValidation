@@ -56,7 +56,7 @@ class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationManager : public
 {
     GENERATED_UCLASS_BODY()
 
-public:
+
     static UNamingConventionValidationManager * Get();
 
     virtual void Initialize();

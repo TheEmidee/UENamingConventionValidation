@@ -217,7 +217,6 @@ void MenuValidateData()
     if ( !success )
     {
         FMessageDialog::Open( EAppMsgType::Ok, LOCTEXT( "NamingConventionValidationError", "An error was encountered during naming convention validation. See the log for details." ) );
-        return;
     }
 }
 

@@ -7,7 +7,7 @@
 #include <IAssetRegistry.h>
 
 // ReSharper disable once CppInconsistentNaming
-DEFINE_LOG_CATEGORY_STATIC( LogNamingConventionValidation, Warning, All );
+DEFINE_LOG_CATEGORY_STATIC( LogNamingConventionValidation, Warning, All )
 
 UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet()
 {

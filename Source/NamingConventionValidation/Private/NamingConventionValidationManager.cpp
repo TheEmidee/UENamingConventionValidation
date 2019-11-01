@@ -50,7 +50,7 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
     if ( NamingConventionValidationManager == nullptr )
     {
-        const auto naming_convention_validation_manager_class_name = ( UNamingConventionValidationManager::StaticClass()->GetDefaultObject< UNamingConventionValidationManager >() )->NamingConventionValidationManagerClassName;
+        const auto naming_convention_validation_manager_class_name = StaticClass()->GetDefaultObject< UNamingConventionValidationManager >()->NamingConventionValidationManagerClassName;
 
         const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
@@ -193,7 +193,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         }
     }
 
-    const auto has_failed = ( num_invalid_files > 0 );
+    const auto has_failed = num_invalid_files > 0;
 
     if ( has_failed || show_if_no_failures )
     {
@@ -338,7 +338,7 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
         }
     }
 
-    const auto has_failed = ( num_files_failed > 0 );
+    const auto has_failed = num_files_failed > 0;
 
     if ( has_failed || show_if_no_failures )
     {
