@@ -38,7 +38,7 @@ int32 UNamingConventionValidationCommandlet::Main( const FString & params )
 //static
 bool UNamingConventionValidationCommandlet::ValidateData()
 {
-    FAssetRegistryModule & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
+    auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
 
     TArray< FAssetData > asset_data_list;
     
@@ -47,7 +47,7 @@ bool UNamingConventionValidationCommandlet::ValidateData()
     filter.PackagePaths.Add( "/Game" );
     asset_registry_module.Get().GetAssets( filter, asset_data_list );
 
-    UNamingConventionValidationManager * naming_convention_validation_manager = UNamingConventionValidationManager::Get();
+    const auto naming_convention_validation_manager = UNamingConventionValidationManager::Get();
     check( naming_convention_validation_manager );
 
     // ReSharper disable once CppExpressionWithoutSideEffects

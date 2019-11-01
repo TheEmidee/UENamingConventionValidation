@@ -205,7 +205,7 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
         arguments.Add( TEXT( "NumSkipped" ), num_files_skipped );
         arguments.Add( TEXT( "NumUnableToValidate" ), num_files_unable_to_validate );
 
-        TSharedRef< FTokenizedMessage > validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
+        auto validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "SuccessOrFailure", "NamingConvention Validation {Result}." ), arguments ) ) );
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "ResultsSummary", "Files Checked: {NumChecked}, Passed: {NumValid}, Failed: {NumInvalid}, Skipped: {NumSkipped}, Unable to validate: {NumUnableToValidate}" ), arguments ) ) );
 
@@ -226,7 +226,7 @@ void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetDat
 
     if ( ValidateAssets( asset_data_list, true, false ) > 0 )
     {
-        const FText error_message_notification = FText::Format(
+        const auto error_message_notification = FText::Format(
             LOCTEXT( "ValidationFailureNotification", "Naming Convention Validation failed when saving {0}, check Naming Convention Validation log" ),
             asset_data_list.Num() == 1 ? FText::FromName( asset_data_list[ 0 ].AssetName ) : LOCTEXT( "MultipleErrors", "multiple assets" ) );
         data_validation_log.Notify( error_message_notification, EMessageSeverity::Warning, /*bForce=*/true );
@@ -298,7 +298,7 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
                 FAssetRenameData asset_rename_data( old_object_path, new_object_path );
                 assets_to_rename.Emplace( asset_rename_data );
 
-                FAssetToolsModule & module = FModuleManager::GetModuleChecked< FAssetToolsModule >( "AssetTools" );
+                auto & module = FModuleManager::GetModuleChecked< FAssetToolsModule >( "AssetTools" );
                 if ( !module.Get().RenameAssets( assets_to_rename ) )
                 {
                     ++num_files_failed;
@@ -349,7 +349,7 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
         arguments.Add( TEXT( "NumSkipped" ), num_files_skipped );
         arguments.Add( TEXT( "NumFailed" ), num_files_failed );
 
-        TSharedRef< FTokenizedMessage > validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
+        auto validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "SuccessOrFailure", "Renaming following NamingConvention {Result}." ), arguments ) ) );
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "ResultsSummary", "Files Checked: {NumChecked}, Renamed: {NumRenamed}, Failed: {NumFailed}, Skipped: {NumSkipped}" ), arguments ) ) );
 
@@ -363,7 +363,7 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
 
 bool UNamingConventionValidationManager::IsPathExcludedFromValidation( const FString & path ) const
 {
-    for ( const FDirectoryPath & excluded_path : ExcludedDirectories )
+    for ( const auto & excluded_path : ExcludedDirectories )
     {
         if ( path.Contains( excluded_path.Path ) )
         {
@@ -376,7 +376,7 @@ bool UNamingConventionValidationManager::IsPathExcludedFromValidation( const FSt
 
 void UNamingConventionValidationManager::ValidateAllSavedPackages()
 {
-    FAssetRegistryModule & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
+    auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
     TArray< FAssetData > assets;
 
     for ( const auto package_name : SavedPackagesToValidate )
@@ -397,7 +397,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
     const auto asset_name = asset_data.AssetName.ToString();
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
-    if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
+    if ( const auto asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
         for ( auto * excluded_class : ExcludedClasses )
         {
@@ -451,19 +451,19 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
 
 void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObjectPath & renamed_soft_object_path, const FAssetData & asset_data ) const
 {
-    const FSoftObjectPath path = asset_data.ToSoftObjectPath();
+    const auto path = asset_data.ToSoftObjectPath();
     FName asset_class;
 
     // /Game/Levels/Props/Meshes/1M_Cube.1M_Cube
     TryGetAssetDataRealClass( asset_class, asset_data );
 
-    FString renamed_path = FPaths::GetPath( path.GetLongPackageName() );
-    FString renamed_name = path.GetAssetName();
+    auto renamed_path = FPaths::GetPath( path.GetLongPackageName() );
+    auto renamed_name = path.GetAssetName();
 
     const auto asset_name = asset_data.AssetName.ToString();
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
-    if ( UClass * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
+    if ( const auto asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
         for ( const auto & class_description : ClassDescriptions )
         {
