@@ -14,7 +14,7 @@
     [
         {
             "Name" : "NamingConventionValidation",
-            "Type" : "Developer",
+            "Type" : "Editor",
             "LoadingPhase" : "PreDefault"
         }
     ]
