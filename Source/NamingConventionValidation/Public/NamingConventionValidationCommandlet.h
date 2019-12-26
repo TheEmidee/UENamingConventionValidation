@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Commandlets/Commandlet.h>
-#include <UObject/Interface.h>
 
 #include "NamingConventionValidationCommandlet.generated.h"
 
