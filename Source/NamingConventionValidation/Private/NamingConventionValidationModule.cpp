@@ -90,6 +90,10 @@ void RenameAssets( const TArray< FAssetData > selected_assets, const bool includ
 
             unique_assets = dependent_assets.Array();
         }
+        else
+        {
+            unique_assets = selected_assets;
+        }
 
         // ReSharper disable once CppExpressionWithoutSideEffects
         naming_convention_validation_manager->RenameAssets( unique_assets );
