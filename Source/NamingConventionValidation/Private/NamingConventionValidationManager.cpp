@@ -1,5 +1,7 @@
 #include "NamingConventionValidationManager.h"
 
+#include "NamingConventionValidation/Public/NamingConventionValidationSettings.h"
+
 #include <AssetRegistryModule.h>
 #include <AssetToolsModule.h>
 #include <Developer/MessageLog/Public/MessageLogModule.h>
@@ -41,16 +43,14 @@ UNamingConventionValidationManager * NamingConventionValidationManager = nullptr
 UNamingConventionValidationManager::UNamingConventionValidationManager( const FObjectInitializer & object_initializer ) :
     Super( object_initializer )
 {
-    NamingConventionValidationManagerClassName = FSoftClassPath( TEXT( "/Script/NamingConventionValidation.NamingConventionValidationManager" ) );
-    DoesValidateOnSave = true;
-    BlueprintsPrefix = "BP_";
 }
 
 UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
     if ( NamingConventionValidationManager == nullptr )
     {
-        const auto naming_convention_validation_manager_class_name = StaticClass()->GetDefaultObject< UNamingConventionValidationManager >()->NamingConventionValidationManagerClassName;
+        const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+        const auto naming_convention_validation_manager_class_name = settings->NamingConventionValidationManagerClassName;
 
         const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
@@ -70,33 +70,42 @@ void UNamingConventionValidationManager::Initialize()
     FMessageLogInitializationOptions init_options;
     init_options.bShowFilters = true;
 
+    auto * settings = GetMutableDefault< UNamingConventionValidationSettings >();
+
     auto & message_log_module = FModuleManager::LoadModuleChecked< FMessageLogModule >( "MessageLog" );
     message_log_module.RegisterLogListing( "NamingConventionValidation", LOCTEXT( "NamingConventionValidation", "Naming Convention Validation" ), init_options );
 
-    for ( auto & class_description : ClassDescriptions )
+    for ( auto & class_description : settings->ClassDescriptions )
     {
         class_description.Class = class_description.ClassPath.TryLoadClass< UObject >();
 
         UE_CLOG( class_description.Class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
 
-    ClassDescriptions.Sort();
+    settings->ClassDescriptions.Sort();
 
-    for ( auto & class_path : ExcludedClassPaths )
+    for ( auto & class_path : settings->ExcludedClassPaths )
     {
         auto * excluded_class = class_path.TryLoadClass< UObject >();
         UE_CLOG( excluded_class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
 
         if ( excluded_class != nullptr )
         {
-            ExcludedClasses.Add( excluded_class );
+            settings->ExcludedClasses.Add( excluded_class );
         }
     }
 
     static const FDirectoryPath 
         EngineDirectoryPath( { TEXT( "/Engine/" ) } );
-    
-    ExcludedDirectories.Add( EngineDirectoryPath );
+
+    // Cannot use AddUnique since FDirectoryPath does not have operator==
+    if ( !settings->ExcludedDirectories.ContainsByPredicate( []( const auto & item )
+    {
+        return item.Path == EngineDirectoryPath.Path;
+    } ) )
+    {
+        settings->ExcludedDirectories.Add( EngineDirectoryPath );   
+    }
 }
 
 UNamingConventionValidationManager::~UNamingConventionValidationManager()
@@ -105,7 +114,8 @@ UNamingConventionValidationManager::~UNamingConventionValidationManager()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const
 {
-    if ( IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    if ( settings->IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
     {
         return ENamingConventionValidationResult::Excluded;
     }
@@ -217,7 +227,8 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
 
 void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const
 {
-    if ( !DoesValidateOnSave || GEditor->IsAutosaving() )
+    auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -235,7 +246,8 @@ void UNamingConventionValidationManager::ValidateOnSave( const TArray< FAssetDat
 
 void UNamingConventionValidationManager::ValidateSavedPackage( const FName package_name )
 {
-    if ( !DoesValidateOnSave || GEditor->IsAutosaving() )
+    auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -361,19 +373,6 @@ int32 UNamingConventionValidationManager::RenameAssets( const TArray< FAssetData
 
 // -- PROTECTED
 
-bool UNamingConventionValidationManager::IsPathExcludedFromValidation( const FString & path ) const
-{
-    for ( const auto & excluded_path : ExcludedDirectories )
-    {
-        if ( path.Contains( excluded_path.Path ) )
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void UNamingConventionValidationManager::ValidateAllSavedPackages()
 {
     auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
@@ -394,12 +393,13 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const
 {
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >(); 
     const auto asset_name = asset_data.AssetName.ToString();
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( const auto asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
-        for ( auto * excluded_class : ExcludedClasses )
+        for ( auto * excluded_class : settings->ExcludedClasses )
         {
             if ( asset_real_class->IsChildOf( excluded_class ) )
             {
@@ -407,7 +407,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
             }
         }
 
-        for ( const auto & class_description : ClassDescriptions )
+        for ( const auto & class_description : settings->ClassDescriptions )
         {
             if ( asset_real_class->IsChildOf( class_description.Class ) )
             {
@@ -437,7 +437,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
     static const FName BlueprintClassName( "Blueprint" );
     if ( asset_data.AssetClass == BlueprintClassName )
     {
-        if ( !asset_name.StartsWith( BlueprintsPrefix ) )
+        if ( !asset_name.StartsWith( settings->BlueprintsPrefix ) )
         {
             error_message = FText::FromString( TEXT( "Generic blueprint assets must start with BP_" ) );
             return ENamingConventionValidationResult::Invalid;
@@ -451,6 +451,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
 
 void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObjectPath & renamed_soft_object_path, const FAssetData & asset_data ) const
 {
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     const auto path = asset_data.ToSoftObjectPath();
     FName asset_class;
 
@@ -465,7 +466,7 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
 
     if ( const auto asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
-        for ( const auto & class_description : ClassDescriptions )
+        for ( const auto & class_description : settings->ClassDescriptions )
         {
             if ( asset_real_class->IsChildOf( class_description.Class ) )
             {
@@ -489,7 +490,7 @@ void UNamingConventionValidationManager::GetRenamedAssetSoftObjectPath( FSoftObj
         static const FName BlueprintClassName( "Blueprint" );
         if ( asset_data.AssetClass == BlueprintClassName )
         {
-            renamed_name.InsertAt( 0, BlueprintsPrefix );
+            renamed_name.InsertAt( 0, settings->BlueprintsPrefix );
         }
     }
 
