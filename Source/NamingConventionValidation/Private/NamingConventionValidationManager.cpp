@@ -49,13 +49,7 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
 {
     if ( NamingConventionValidationManager == nullptr )
     {
-        const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-        const auto naming_convention_validation_manager_class_name = settings->NamingConventionValidationManagerClassName;
-
-        const auto singleton_class = naming_convention_validation_manager_class_name.LoadSynchronous();
-        checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
-
-        NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
+        NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage() );
         checkf( NamingConventionValidationManager != nullptr, TEXT( "Naming Convention validation config value NamingConventionValidationManagerClassName is not a subclass of UNamingConventionValidationManager." ) );
 
         NamingConventionValidationManager->AddToRoot();

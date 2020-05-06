@@ -2,8 +2,6 @@
 
 UNamingConventionValidationSettings::UNamingConventionValidationSettings()
 {
-    NamingConventionValidationManagerClassName = FSoftClassPath( TEXT( "/Script/NamingConventionValidation.NamingConventionValidationManager" ) );
-    
     DoesValidateOnSave = true;
     BlueprintsPrefix = "BP_";
 }
