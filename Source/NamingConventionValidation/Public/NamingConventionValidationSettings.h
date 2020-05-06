@@ -47,9 +47,6 @@ public:
 
     bool IsPathExcludedFromValidation( const FString & path ) const;
 
-    UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )
-    TSoftClassPtr< UNamingConventionValidationSettings > NamingConventionValidationManagerClassName;
-
     UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true ) )
     TArray< FDirectoryPath > ExcludedDirectories;
 
