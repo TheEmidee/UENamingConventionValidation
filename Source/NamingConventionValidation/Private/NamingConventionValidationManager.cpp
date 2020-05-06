@@ -52,7 +52,7 @@ UNamingConventionValidationManager * UNamingConventionValidationManager::Get()
         const auto * settings = GetDefault< UNamingConventionValidationSettings >();
         const auto naming_convention_validation_manager_class_name = settings->NamingConventionValidationManagerClassName;
 
-        const auto singleton_class = naming_convention_validation_manager_class_name.TryLoadClass< UObject >();
+        const auto singleton_class = naming_convention_validation_manager_class_name.LoadSynchronous();
         checkf( singleton_class != nullptr, TEXT( "Naming Convention Validation config value NamingConventionValidationManagerClassName is not a valid class name." ) );
 
         NamingConventionValidationManager = NewObject< UNamingConventionValidationManager >( GetTransientPackage(), singleton_class, NAME_None );
@@ -77,7 +77,7 @@ void UNamingConventionValidationManager::Initialize()
 
     for ( auto & class_description : settings->ClassDescriptions )
     {
-        class_description.Class = class_description.ClassPath.TryLoadClass< UObject >();
+        class_description.Class = class_description.ClassPath.LoadSynchronous();
 
         UE_CLOG( class_description.Class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
@@ -86,7 +86,7 @@ void UNamingConventionValidationManager::Initialize()
 
     for ( auto & class_path : settings->ExcludedClassPaths )
     {
-        auto * excluded_class = class_path.TryLoadClass< UObject >();
+        auto * excluded_class = class_path.LoadSynchronous();
         UE_CLOG( excluded_class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
 
         if ( excluded_class != nullptr )

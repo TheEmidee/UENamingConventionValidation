@@ -22,7 +22,7 @@ struct FNamingConventionValidationClassDescription
     }
 
     UPROPERTY( config, EditAnywhere )
-    FSoftClassPath ClassPath;
+    TSoftClassPtr< UObject > ClassPath;
 
     UPROPERTY( transient )
     UClass * Class;
@@ -43,14 +43,13 @@ class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final :
     GENERATED_BODY()
 
 public:
-
     UNamingConventionValidationSettings();
 
     bool IsPathExcludedFromValidation( const FString & path ) const;
-    
+
     UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )
-    FSoftClassPath NamingConventionValidationManagerClassName;
-    
+    TSoftClassPtr< UNamingConventionValidationSettings > NamingConventionValidationManagerClassName;
+
     UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true ) )
     TArray< FDirectoryPath > ExcludedDirectories;
 
@@ -61,7 +60,7 @@ public:
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
 
     UPROPERTY( config, EditAnywhere )
-    TArray< FSoftClassPath > ExcludedClassPaths;
+    TArray< TSoftClassPtr< UObject > > ExcludedClassPaths;
 
     UPROPERTY( transient )
     TArray< UClass * > ExcludedClasses;
