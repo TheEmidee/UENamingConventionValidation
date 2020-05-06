@@ -77,7 +77,7 @@ void UNamingConventionValidationManager::Initialize()
     {
         class_description.Class = class_description.ClassPath.TryLoadClass< UObject >();
 
-        ensureAlwaysMsgf( class_description.Class != nullptr, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
+        UE_CLOG( class_description.Class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
 
     ClassDescriptions.Sort();
@@ -85,7 +85,7 @@ void UNamingConventionValidationManager::Initialize()
     for ( auto & class_path : ExcludedClassPaths )
     {
         auto * excluded_class = class_path.TryLoadClass< UObject >();
-        ensureAlwaysMsgf( excluded_class != nullptr, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
+        UE_CLOG( excluded_class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
 
         if ( excluded_class != nullptr )
         {
