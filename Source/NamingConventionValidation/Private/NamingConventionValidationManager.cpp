@@ -389,7 +389,7 @@ void UNamingConventionValidationManager::ValidateAllSavedPackages()
 
 ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const
 {
-    const auto * settings = GetDefault< UNamingConventionValidationSettings >(); 
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     const auto asset_name = asset_data.AssetName.ToString();
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
