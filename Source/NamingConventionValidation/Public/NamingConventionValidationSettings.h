@@ -51,6 +51,12 @@ public:
     TArray< FDirectoryPath > ExcludedDirectories;
 
     UPROPERTY( config, EditAnywhere )
+    uint8 AllowRenamingInDevelopersFolder : 1;
+
+    UPROPERTY( config, EditAnywhere )
+    uint8 AllowRenamingOnlyInGameFolder : 1;
+
+    UPROPERTY( config, EditAnywhere )
     bool DoesValidateOnSave;
 
     UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )

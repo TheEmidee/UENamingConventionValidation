@@ -141,19 +141,14 @@ void CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, c
     menu_builder.AddMenuSeparator();
     menu_builder.AddMenuEntry(
         LOCTEXT( "NamingConventionValidateAssetsTabTitle", "Validate Assets Naming Convention" ),
-        LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Runs naming convention validation on these assets." ),
+        LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Run naming convention validation on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( ValidateAssets, selected_assets ) ) );
     menu_builder.AddMenuEntry(
         LOCTEXT( "NamingConventionRenameAssetsTabTitle", "Rename Assets following Naming Convention" ),
-        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Runs a renaming following the naming convention on these assets." ),
+        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Run a renaming following the naming convention on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, false ) ) );
-    menu_builder.AddMenuEntry(
-        LOCTEXT( "NamingConventionRenameAssetsInFolderTabTitle", "Rename Assets following Naming Convention, and all their dependencies" ),
-        LOCTEXT( "NamingConventionRenameAssetsInFolderTooltipText", "Runs a renaming following the naming convention on these assets and their dependencies." ),
-        FSlateIcon(),
-        FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, true ) ) );
 }
 
 TSharedRef< FExtender > OnExtendContentBrowserAssetSelectionMenu( const TArray< FAssetData > & selected_assets )
@@ -177,7 +172,7 @@ void CreateDataValidationContentBrowserPathMenu( FMenuBuilder & menu_builder, co
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( ValidateFolders, selected_paths ) ) );
     menu_builder.AddMenuEntry(
-        LOCTEXT( "NamingConventionRenameAssetsPathTabTitle", "Renaming assets following Assets Naming Convention in Folder" ),
+        LOCTEXT( "NamingConventionRenameAssetsPathTabTitle", "Rename assets following Assets Naming Convention in Folder" ),
         LOCTEXT( "NamingConventionRenameAssetsPathTooltipText", "Runs naming convention validation on the assets in the selected folder." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( RenameInFolders, selected_paths ) ) );
