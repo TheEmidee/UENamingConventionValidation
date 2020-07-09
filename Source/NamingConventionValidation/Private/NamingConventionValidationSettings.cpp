@@ -22,7 +22,7 @@ bool UNamingConventionValidationSettings::IsPathExcludedFromValidation( const FS
 
     for ( const auto & excluded_path : ExcludedDirectories )
     {
-        if ( path.Contains( excluded_path.Path ) )
+        if ( path.StartsWith( excluded_path.Path ) )
         {
             return true;
         }
