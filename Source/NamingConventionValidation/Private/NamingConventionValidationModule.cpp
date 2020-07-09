@@ -141,12 +141,12 @@ void CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, c
     menu_builder.AddMenuSeparator();
     menu_builder.AddMenuEntry(
         LOCTEXT( "NamingConventionValidateAssetsTabTitle", "Validate Assets Naming Convention" ),
-        LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Runs naming convention validation on these assets." ),
+        LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Run naming convention validation on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( ValidateAssets, selected_assets ) ) );
     menu_builder.AddMenuEntry(
         LOCTEXT( "NamingConventionRenameAssetsTabTitle", "Rename Assets following Naming Convention" ),
-        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Runs a renaming following the naming convention on these assets." ),
+        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Run a renaming following the naming convention on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, false ) ) );
 }
