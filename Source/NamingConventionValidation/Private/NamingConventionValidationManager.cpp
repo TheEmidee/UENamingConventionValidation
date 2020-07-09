@@ -89,16 +89,15 @@ void UNamingConventionValidationManager::Initialize()
         }
     }
 
-    static const FDirectoryPath 
+    static const FDirectoryPath
         EngineDirectoryPath( { TEXT( "/Engine/" ) } );
 
     // Cannot use AddUnique since FDirectoryPath does not have operator==
-    if ( !settings->ExcludedDirectories.ContainsByPredicate( []( const auto & item )
+    if ( !settings->ExcludedDirectories.ContainsByPredicate( []( const auto & item ) {
+             return item.Path == EngineDirectoryPath.Path;
+         } ) )
     {
-        return item.Path == EngineDirectoryPath.Path;
-    } ) )
-    {
-        settings->ExcludedDirectories.Add( EngineDirectoryPath );   
+        settings->ExcludedDirectories.Add( EngineDirectoryPath );
     }
 }
 
@@ -111,12 +110,14 @@ ENamingConventionValidationResult UNamingConventionValidationManager::IsAssetNam
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     if ( settings->IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
     {
+        error_message = LOCTEXT( "ExcludedFolder", "The asset is in an excluded directory" );
         return ENamingConventionValidationResult::Excluded;
     }
 
     FName asset_class;
     if ( !TryGetAssetDataRealClass( asset_class, asset_data ) )
     {
+        error_message = LOCTEXT( "UnknownClass", "The asset is of a class which has not been set up in the settings" );
         return ENamingConventionValidationResult::Unknown;
     }
 
@@ -156,7 +157,8 @@ int32 UNamingConventionValidationManager::ValidateAssets( const TArray< FAssetDa
             {
                 data_validation_log.Info()
                     ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
-                    ->AddToken( FTextToken::Create( LOCTEXT( "ExcludedNamingConventionResult", "has not been tested based on the configuration." ) ) );
+                    ->AddToken( FTextToken::Create( LOCTEXT( "ExcludedNamingConventionResult", "has not been tested based on the configuration." ) ) )
+                    ->AddToken( FTextToken::Create( error_message ) );
 
                 ++num_files_skipped;
             }
@@ -397,6 +399,7 @@ ENamingConventionValidationResult UNamingConventionValidationManager::DoesAssetM
         {
             if ( asset_real_class->IsChildOf( excluded_class ) )
             {
+                error_message = FText::Format( LOCTEXT( "ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation" ), FText::FromString( excluded_class->GetDefaultObjectName().ToString() ) );
                 return ENamingConventionValidationResult::Excluded;
             }
         }
