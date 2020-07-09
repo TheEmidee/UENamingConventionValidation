@@ -149,11 +149,6 @@ void CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, c
         LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Runs a renaming following the naming convention on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, false ) ) );
-    /*menu_builder.AddMenuEntry(
-        LOCTEXT( "NamingConventionRenameAssetsInFolderTabTitle", "Rename Assets following Naming Convention, and all their dependencies" ),
-        LOCTEXT( "NamingConventionRenameAssetsInFolderTooltipText", "Runs a renaming following the naming convention on these assets and their dependencies." ),
-        FSlateIcon(),
-        FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, true ) ) );*/
 }
 
 TSharedRef< FExtender > OnExtendContentBrowserAssetSelectionMenu( const TArray< FAssetData > & selected_assets )
