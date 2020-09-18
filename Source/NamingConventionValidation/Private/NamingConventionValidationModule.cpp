@@ -52,51 +52,17 @@ void FindAssetDependencies( const FAssetRegistryModule & asset_registry_module, 
 
 void OnPackageSaved( const FString & /*package_file_name*/, UObject * object )
 {
-    if ( auto * manager = UNamingConventionValidationManager::Get() )
+    if ( auto * editor_validation_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >() )
     {
-        if ( object != nullptr )
-        {
-            manager->ValidateSavedPackage( object->GetFName() );
-        }
+         editor_validation_subsystem->ValidateSavedPackage( object->GetFName() );
     }
 }
 
 void ValidateAssets( const TArray< FAssetData > selected_assets )
 {
-    if ( auto * naming_convention_validation_manager = UNamingConventionValidationManager::Get() )
+    if ( auto * editor_validation_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >() )
     {
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        naming_convention_validation_manager->ValidateAssets( selected_assets );
-    }
-}
-
-void RenameAssets( const TArray< FAssetData > selected_assets, const bool include_dependencies )
-{
-    if ( auto * naming_convention_validation_manager = UNamingConventionValidationManager::Get() )
-    {
-        TArray< FAssetData > unique_assets;
-        unique_assets.Reserve( selected_assets.Num() );
-
-        TSet< FAssetData > dependent_assets;
-        dependent_assets.Reserve( selected_assets.Num() );
-        if ( include_dependencies )
-        {
-            const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
-
-            for ( const auto & asset_data : selected_assets )
-            {
-                FindAssetDependencies( asset_registry_module, asset_data, dependent_assets );
-            }
-
-            unique_assets = dependent_assets.Array();
-        }
-        else
-        {
-            unique_assets = selected_assets;
-        }
-
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        naming_convention_validation_manager->RenameAssets( unique_assets );
+         editor_validation_subsystem->ValidateAssets( selected_assets );
     }
 }
 
@@ -118,24 +84,6 @@ void ValidateFolders( const TArray< FString > selected_folders )
     ValidateAssets( asset_list );
 }
 
-void RenameInFolders( const TArray< FString > selected_folders )
-{
-    auto & asset_registry_module = FModuleManager::Get().LoadModuleChecked< FAssetRegistryModule >( TEXT( "AssetRegistry" ) );
-
-    FARFilter filter;
-    filter.bRecursivePaths = true;
-
-    for ( const auto & folder : selected_folders )
-    {
-        filter.PackagePaths.Emplace( *folder );
-    }
-
-    TArray< FAssetData > asset_list;
-    asset_registry_module.Get().GetAssets( filter, asset_list );
-
-    RenameAssets( asset_list, false );
-}
-
 void CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, const TArray< FAssetData > selected_assets )
 {
     menu_builder.AddMenuSeparator();
@@ -144,11 +92,6 @@ void CreateDataValidationContentBrowserAssetMenu( FMenuBuilder & menu_builder, c
         LOCTEXT( "NamingConventionValidateAssetsTooltipText", "Run naming convention validation on these assets." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( ValidateAssets, selected_assets ) ) );
-    menu_builder.AddMenuEntry(
-        LOCTEXT( "NamingConventionRenameAssetsTabTitle", "Rename Assets following Naming Convention" ),
-        LOCTEXT( "NamingConventionRenameAssetsTooltipText", "Run a renaming following the naming convention on these assets." ),
-        FSlateIcon(),
-        FUIAction( FExecuteAction::CreateStatic( RenameAssets, selected_assets, false ) ) );
 }
 
 TSharedRef< FExtender > OnExtendContentBrowserAssetSelectionMenu( const TArray< FAssetData > & selected_assets )
@@ -171,11 +114,6 @@ void CreateDataValidationContentBrowserPathMenu( FMenuBuilder & menu_builder, co
         LOCTEXT( "NamingConventionValidateAssetsPathTooltipText", "Runs naming convention validation on the assets in the selected folder." ),
         FSlateIcon(),
         FUIAction( FExecuteAction::CreateStatic( ValidateFolders, selected_paths ) ) );
-    menu_builder.AddMenuEntry(
-        LOCTEXT( "NamingConventionRenameAssetsPathTabTitle", "Rename assets following Assets Naming Convention in Folder" ),
-        LOCTEXT( "NamingConventionRenameAssetsPathTooltipText", "Runs naming convention validation on the assets in the selected folder." ),
-        FSlateIcon(),
-        FUIAction( FExecuteAction::CreateStatic( RenameInFolders, selected_paths ) ) );
 }
 
 TSharedRef< FExtender > OnExtendContentBrowserPathSelectionMenu( const TArray< FString > & selected_paths )
@@ -277,10 +215,10 @@ void FNamingConventionValidationModule::ShutdownModule()
         if ( auto * content_browser_module = FModuleManager::GetModulePtr< FContentBrowserModule >( TEXT( "ContentBrowser" ) ) )
         {
             auto & content_browser_menu_extender_delegates = content_browser_module->GetAllAssetViewContextMenuExtenders();
-            content_browser_menu_extender_delegates.RemoveAll( [this]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
+            content_browser_menu_extender_delegates.RemoveAll( [ this ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
                 return delegate.GetHandle() == ContentBrowserAssetExtenderDelegateHandle;
             } );
-            content_browser_menu_extender_delegates.RemoveAll( [this]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
+            content_browser_menu_extender_delegates.RemoveAll( [ this ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
                 return delegate.GetHandle() == ContentBrowserPathExtenderDelegateHandle;
             } );
         }

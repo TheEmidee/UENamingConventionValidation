@@ -36,7 +36,6 @@ public:
     int32 ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
     void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;
     void ValidateSavedPackage( const FName package_name );
-    int32 RenameAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
 
 protected:
     void ValidateAllSavedPackages();
