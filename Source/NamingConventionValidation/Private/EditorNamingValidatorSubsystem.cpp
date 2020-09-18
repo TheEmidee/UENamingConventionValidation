@@ -232,6 +232,14 @@ void UEditorNamingValidatorSubsystem::ValidateSavedPackage( const FName package_
     GEditor->GetTimerManager()->SetTimerForNextTick( this, &UEditorNamingValidatorSubsystem::ValidateAllSavedPackages );
 }
 
+void UEditorNamingValidatorSubsystem::AddValidator( UEditorNamingValidatorBase * validator )
+{
+    if ( validator )
+    {
+        Validators.Add( validator->GetClass(), validator );
+    }
+}
+
 void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 {
     if ( !AllowBlueprintValidators )
@@ -277,14 +285,6 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
             auto * validator = NewObject< UEditorNamingValidatorBase >( GetTransientPackage(), validator_blueprint->GeneratedClass );
             AddValidator( validator );
         }
-    }
-}
-
-void UEditorNamingValidatorSubsystem::AddValidator( UEditorNamingValidatorBase * validator )
-{
-    if ( validator )
-    {
-        Validators.Add( validator->GetClass(), validator );
     }
 }
 

@@ -20,11 +20,11 @@ public:
     void Deinitialize() override;
 
     int32 ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories = true, bool show_if_no_failures = true ) const;
-    void ValidateSavedPackage( const FName package_name );
+    void ValidateSavedPackage( FName package_name );
+    void AddValidator( UEditorNamingValidatorBase * validator );
 
 private:
     void RegisterBlueprintValidators();
-    void AddValidator( UEditorNamingValidatorBase * validator );
     void CleanupValidators();
     void ValidateAllSavedPackages();
     void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;
