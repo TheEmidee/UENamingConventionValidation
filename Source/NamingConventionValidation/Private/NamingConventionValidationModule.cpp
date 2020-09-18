@@ -2,7 +2,6 @@
 
 #include "EditorNamingValidatorSubsystem.h"
 #include "NamingConventionValidationCommandlet.h"
-#include "NamingConventionValidationManager.h"
 
 #include <AssetRegistryModule.h>
 #include <AssetToolsModule.h>
