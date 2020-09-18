@@ -344,50 +344,32 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::IsAssetNamedC
         return ENamingConventionValidationResult::Unknown;
     }
 
-    return DoesAssetMatchNameConvention( asset_data, asset_class, error_message );
+    return DoesAssetMatchNameConvention( error_message, asset_data, asset_class );
 }
 
-ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     const auto asset_name = asset_data.AssetName.ToString();
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
-    if ( const auto asset_real_class = asset_class_path.TryLoadClass< UObject >() )
+    if ( const auto * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
     {
-        for ( auto * excluded_class : settings->ExcludedClasses )
+        if ( IsClassExcluded( error_message, asset_real_class ) )
         {
-            if ( asset_real_class->IsChildOf( excluded_class ) )
-            {
-                error_message = FText::Format( LOCTEXT( "ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation" ), FText::FromString( excluded_class->GetDefaultObjectName().ToString() ) );
-                return ENamingConventionValidationResult::Excluded;
-            }
+            return ENamingConventionValidationResult::Excluded;
         }
 
-        for ( const auto & class_description : settings->ClassDescriptions )
+        auto result = DoesAssetMatchesValidators( error_message, asset_real_class, asset_name );
+        if ( result != ENamingConventionValidationResult::Unknown )
         {
-            if ( asset_real_class->IsChildOf( class_description.Class ) )
-            {
-                if ( !class_description.Prefix.IsEmpty() )
-                {
-                    if ( !asset_name.StartsWith( class_description.Prefix ) )
-                    {
-                        error_message = FText::Format( LOCTEXT( "WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
-                        return ENamingConventionValidationResult::Invalid;
-                    }
-                }
+            return result;
+        }
 
-                if ( !class_description.Suffix.IsEmpty() )
-                {
-                    if ( !asset_name.EndsWith( class_description.Suffix ) )
-                    {
-                        error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
-                        return ENamingConventionValidationResult::Invalid;
-                    }
-                }
-
-                return ENamingConventionValidationResult::Valid;
-            }
+        result = DoesAssetMatchesClassDescriptions( error_message, asset_real_class, asset_name );
+        if ( result != ENamingConventionValidationResult::Unknown )
+        {
+            return result;
         }
     }
 
@@ -401,6 +383,73 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         }
 
         return ENamingConventionValidationResult::Valid;
+    }
+
+    return ENamingConventionValidationResult::Unknown;
+}
+
+bool UEditorNamingValidatorSubsystem::IsClassExcluded( FText & error_message, const UClass * asset_class ) const
+{
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+
+    for ( auto * excluded_class : settings->ExcludedClasses )
+    {
+        if ( asset_class->IsChildOf( excluded_class ) )
+        {
+            error_message = FText::Format( LOCTEXT( "ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation" ), FText::FromString( excluded_class->GetDefaultObjectName().ToString() ) );
+            return true;
+        }
+    }
+
+    return false;
+}
+
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesClassDescriptions( FText & error_message, const UClass * asset_class, const FString & asset_name ) const
+{
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+
+    for ( const auto & class_description : settings->ClassDescriptions )
+    {
+        if ( asset_class->IsChildOf( class_description.Class ) )
+        {
+            if ( !class_description.Prefix.IsEmpty() )
+            {
+                if ( !asset_name.StartsWith( class_description.Prefix ) )
+                {
+                    error_message = FText::Format( LOCTEXT( "WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
+                    return ENamingConventionValidationResult::Invalid;
+                }
+            }
+
+            if ( !class_description.Suffix.IsEmpty() )
+            {
+                if ( !asset_name.EndsWith( class_description.Suffix ) )
+                {
+                    error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
+                    return ENamingConventionValidationResult::Invalid;
+                }
+            }
+
+            return ENamingConventionValidationResult::Valid;
+        }
+    }
+
+    return ENamingConventionValidationResult::Unknown;
+}
+
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FString & asset_name ) const
+{
+    for ( const auto & validator_pair : Validators )
+    {
+        if ( validator_pair.Value != nullptr && validator_pair.Value->IsEnabled() && validator_pair.Value->CanValidateAssetNaming( asset_class, asset_name ) )
+        {
+            const auto result = validator_pair.Value->ValidateAssetNaming( error_message, asset_class, asset_name );
+
+            if ( result != ENamingConventionValidationResult::Unknown )
+            {
+                return result;
+            }
+        }
     }
 
     return ENamingConventionValidationResult::Unknown;

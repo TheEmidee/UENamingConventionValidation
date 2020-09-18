@@ -5,6 +5,7 @@
 
 #include "EditorNamingValidatorSubsystem.generated.h"
 
+UENUM()
 enum class ENamingConventionValidationResult : uint8
 {
     Invalid,
@@ -35,7 +36,10 @@ private:
     void ValidateAllSavedPackages();
     void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;
     ENamingConventionValidationResult IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const;
-    ENamingConventionValidationResult DoesAssetMatchNameConvention( const FAssetData & asset_data, const FName asset_class, FText & error_message ) const;
+    ENamingConventionValidationResult DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class ) const;
+    bool IsClassExcluded( FText & error_message, const UClass * asset_class ) const;
+    ENamingConventionValidationResult DoesAssetMatchesClassDescriptions( FText & error_message, const UClass * asset_class, const FString & asset_name ) const;
+    ENamingConventionValidationResult DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FString & asset_name ) const;
 
     UPROPERTY( config )
     bool AllowBlueprintValidators;
