@@ -1,5 +1,6 @@
 #include "NamingConventionValidationModule.h"
 
+#include "EditorNamingValidatorSubsystem.h"
 #include "NamingConventionValidationCommandlet.h"
 #include "NamingConventionValidationManager.h"
 

@@ -1,5 +1,6 @@
 #include "NamingConventionValidationCommandlet.h"
 
+#include "EditorNamingValidatorSubsystem.h"
 #include "NamingConventionValidationManager.h"
 
 #include <AssetRegistryHelpers.h>
@@ -41,17 +42,17 @@ bool UNamingConventionValidationCommandlet::ValidateData()
     auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
 
     TArray< FAssetData > asset_data_list;
-    
+
     FARFilter filter;
     filter.bRecursivePaths = true;
     filter.PackagePaths.Add( "/Game" );
     asset_registry_module.Get().GetAssets( filter, asset_data_list );
 
-    const auto naming_convention_validation_manager = UNamingConventionValidationManager::Get();
-    check( naming_convention_validation_manager );
+    auto * editor_validator_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >();
+    check( editor_validator_subsystem );
 
     // ReSharper disable once CppExpressionWithoutSideEffects
-    naming_convention_validation_manager->ValidateAssets( asset_data_list );
+    editor_validator_subsystem->ValidateAssets( asset_data_list );
 
     return true;
 }
