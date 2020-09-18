@@ -16,7 +16,8 @@ namespace UnrealBuildTool.Rules
                     "CoreUObject",
                     "Engine",
                     "TargetPlatform",
-                    "AssetRegistry"
+                    "AssetRegistry",
+                    "EditorSubsystem"
                 }
             );
 
@@ -26,7 +27,8 @@ namespace UnrealBuildTool.Rules
                     "SlateCore",
                     "UnrealEd",
                     "AssetRegistry",
-                    "EditorStyle"
+                    "EditorStyle",
+                    "Blutility"
                 }
             );
         }
