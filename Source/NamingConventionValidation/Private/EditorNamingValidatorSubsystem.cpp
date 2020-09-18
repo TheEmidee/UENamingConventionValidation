@@ -360,7 +360,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
             return ENamingConventionValidationResult::Excluded;
         }
 
-        auto result = DoesAssetMatchesValidators( error_message, asset_real_class, asset_name );
+        auto result = DoesAssetMatchesValidators( error_message, asset_real_class, asset_data );
         if ( result != ENamingConventionValidationResult::Unknown )
         {
             return result;
@@ -437,13 +437,13 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
     return ENamingConventionValidationResult::Unknown;
 }
 
-ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FString & asset_name ) const
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FAssetData & asset_data ) const
 {
     for ( const auto & validator_pair : Validators )
     {
-        if ( validator_pair.Value != nullptr && validator_pair.Value->IsEnabled() && validator_pair.Value->CanValidateAssetNaming( asset_class, asset_name ) )
+        if ( validator_pair.Value != nullptr && validator_pair.Value->IsEnabled() && validator_pair.Value->CanValidateAssetNaming( asset_class, asset_data ) )
         {
-            const auto result = validator_pair.Value->ValidateAssetNaming( error_message, asset_class, asset_name );
+            const auto result = validator_pair.Value->ValidateAssetNaming( error_message, asset_class, asset_data );
 
             if ( result != ENamingConventionValidationResult::Unknown )
             {

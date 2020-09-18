@@ -32,7 +32,7 @@ private:
     ENamingConventionValidationResult DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class ) const;
     bool IsClassExcluded( FText & error_message, const UClass * asset_class ) const;
     ENamingConventionValidationResult DoesAssetMatchesClassDescriptions( FText & error_message, const UClass * asset_class, const FString & asset_name ) const;
-    ENamingConventionValidationResult DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FString & asset_name ) const;
+    ENamingConventionValidationResult DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FAssetData & asset_data ) const;
 
     UPROPERTY( config )
     bool AllowBlueprintValidators;

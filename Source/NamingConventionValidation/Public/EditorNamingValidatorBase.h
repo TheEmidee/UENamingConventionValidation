@@ -16,10 +16,10 @@ public:
     UEditorNamingValidatorBase();
 
     UFUNCTION( BlueprintNativeEvent, BlueprintPure, Category = "Asset Naming Validation" )
-    bool CanValidateAssetNaming( const UClass * asset_class, const FString & asset_name ) const;
+    bool CanValidateAssetNaming( const UClass * asset_class, const FAssetData & asset_data ) const;
 
     UFUNCTION( BlueprintNativeEvent, Category = "Asset Naming Validation" )
-    ENamingConventionValidationResult ValidateAssetNaming( FText & error_message, const UClass * asset_class, const FString & asset_name );
+    ENamingConventionValidationResult ValidateAssetNaming( FText & error_message, const UClass * asset_class, const FAssetData & asset_data );
 
     virtual bool IsEnabled() const;
 
