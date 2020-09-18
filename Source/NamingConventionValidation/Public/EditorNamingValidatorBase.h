@@ -13,6 +13,8 @@ class NAMINGCONVENTIONVALIDATION_API UEditorNamingValidatorBase : public UObject
     GENERATED_BODY()
 
 public:
+    UEditorNamingValidatorBase();
+
     UFUNCTION( BlueprintNativeEvent, BlueprintPure, Category = "Asset Naming Validation" )
     bool CanValidateAssetNaming( const UClass * asset_class, const FString & asset_name ) const;
 

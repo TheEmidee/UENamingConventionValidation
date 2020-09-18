@@ -1,5 +1,10 @@
 #include "EditorNamingValidatorBase.h"
 
+UEditorNamingValidatorBase::UEditorNamingValidatorBase()
+{
+    ItIsEnabled = true;
+}
+
 bool UEditorNamingValidatorBase::CanValidateAssetNaming_Implementation( const UClass * asset_class, const FString & asset_name ) const
 {
     return false;
