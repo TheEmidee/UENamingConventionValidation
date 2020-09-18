@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EditorNamingValidatorSubsystem.h"
+#include "NamingConventionValidationTypes.h"
 
 #include <CoreMinimal.h>
 #include <UObject/NoExportTypes.h>

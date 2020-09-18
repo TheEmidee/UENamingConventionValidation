@@ -1,18 +1,11 @@
 #pragma once
 
+#include "NamingConventionValidationTypes.h"
+
 #include <CoreMinimal.h>
 #include <EditorSubsystem.h>
 
 #include "EditorNamingValidatorSubsystem.generated.h"
-
-UENUM()
-enum class ENamingConventionValidationResult : uint8
-{
-    Invalid,
-    Valid,
-    Unknown,
-    Excluded
-};
 
 class UEditorNamingValidatorBase;
 UCLASS( Config = Editor )
