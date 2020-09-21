@@ -147,7 +147,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
         slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Validating Naming Convention {0}" ), FText::FromString( asset_data.GetFullName() ) ) );
 
         FText error_message;
-        const auto result = IsAssetNamedCorrectly( asset_data, error_message );
+        const auto result = IsAssetNamedCorrectly( error_message, asset_data );
 
         switch ( result )
         {
@@ -240,6 +240,25 @@ void UEditorNamingValidatorSubsystem::AddValidator( UEditorNamingValidatorBase *
     }
 }
 
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::IsAssetNamedCorrectly( FText & error_message, const FAssetData & asset_data, bool can_use_editor_validators ) const
+{
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    if ( settings->IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
+    {
+        error_message = LOCTEXT( "ExcludedFolder", "The asset is in an excluded directory" );
+        return ENamingConventionValidationResult::Excluded;
+    }
+
+    FName asset_class;
+    if ( !TryGetAssetDataRealClass( asset_class, asset_data ) )
+    {
+        error_message = LOCTEXT( "UnknownClass", "The asset is of a class which has not been set up in the settings" );
+        return ENamingConventionValidationResult::Unknown;
+    }
+
+    return DoesAssetMatchNameConvention( error_message, asset_data, asset_class, can_use_editor_validators );
+}
+
 void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 {
     if ( !AllowBlueprintValidators )
@@ -328,26 +347,7 @@ void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData >
     }
 }
 
-ENamingConventionValidationResult UEditorNamingValidatorSubsystem::IsAssetNamedCorrectly( const FAssetData & asset_data, FText & error_message ) const
-{
-    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    if ( settings->IsPathExcludedFromValidation( asset_data.PackageName.ToString() ) )
-    {
-        error_message = LOCTEXT( "ExcludedFolder", "The asset is in an excluded directory" );
-        return ENamingConventionValidationResult::Excluded;
-    }
-
-    FName asset_class;
-    if ( !TryGetAssetDataRealClass( asset_class, asset_data ) )
-    {
-        error_message = LOCTEXT( "UnknownClass", "The asset is of a class which has not been set up in the settings" );
-        return ENamingConventionValidationResult::Unknown;
-    }
-
-    return DoesAssetMatchNameConvention( error_message, asset_data, asset_class );
-}
-
-ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class ) const
+ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class, bool can_use_editor_validators ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     const auto asset_name = asset_data.AssetName.ToString();
@@ -360,10 +360,15 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
             return ENamingConventionValidationResult::Excluded;
         }
 
-        auto result = DoesAssetMatchesValidators( error_message, asset_real_class, asset_data );
-        if ( result != ENamingConventionValidationResult::Unknown )
+        auto result = ENamingConventionValidationResult::Unknown;
+
+        if ( can_use_editor_validators )
         {
-            return result;
+            result = DoesAssetMatchesValidators( error_message, asset_real_class, asset_data );
+            if ( result != ENamingConventionValidationResult::Unknown )
+            {
+                return result;
+            }
         }
 
         result = DoesAssetMatchesClassDescriptions( error_message, asset_real_class, asset_name );
