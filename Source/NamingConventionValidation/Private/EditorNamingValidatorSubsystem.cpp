@@ -430,7 +430,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
             {
                 if ( !asset_name.EndsWith( class_description.Suffix ) )
                 {
-                    error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
+                    error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Suffix ) );
                     return ENamingConventionValidationResult::Invalid;
                 }
             }
