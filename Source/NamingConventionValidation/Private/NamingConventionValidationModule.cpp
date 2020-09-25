@@ -215,11 +215,11 @@ void FNamingConventionValidationModule::ShutdownModule()
         if ( auto * content_browser_module = FModuleManager::GetModulePtr< FContentBrowserModule >( TEXT( "ContentBrowser" ) ) )
         {
             auto & content_browser_menu_extender_delegates = content_browser_module->GetAllAssetViewContextMenuExtenders();
-            content_browser_menu_extender_delegates.RemoveAll( [ this ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
-                return delegate.GetHandle() == ContentBrowserAssetExtenderDelegateHandle;
+            content_browser_menu_extender_delegates.RemoveAll( [ &extender_delegate = ContentBrowserAssetExtenderDelegateHandle ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
+                return delegate.GetHandle() == extender_delegate;
             } );
-            content_browser_menu_extender_delegates.RemoveAll( [ this ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
-                return delegate.GetHandle() == ContentBrowserPathExtenderDelegateHandle;
+            content_browser_menu_extender_delegates.RemoveAll( [ &extender_delegate = ContentBrowserAssetExtenderDelegateHandle ]( const FContentBrowserMenuExtender_SelectedAssets & delegate ) {
+                return delegate.GetHandle() == extender_delegate;
             } );
         }
 

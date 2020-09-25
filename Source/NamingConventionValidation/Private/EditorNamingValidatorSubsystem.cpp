@@ -300,7 +300,7 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
         }
         if ( validator_object )
         {
-            auto * validator_blueprint = Cast< UEditorUtilityBlueprint >( validator_object );
+            const auto * validator_blueprint = Cast< UEditorUtilityBlueprint >( validator_object );
             auto * validator = NewObject< UEditorNamingValidatorBase >( GetTransientPackage(), validator_blueprint->GeneratedClass );
             AddValidator( validator );
         }
@@ -314,7 +314,7 @@ void UEditorNamingValidatorSubsystem::CleanupValidators()
 
 void UEditorNamingValidatorSubsystem::ValidateAllSavedPackages()
 {
-    auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
+    const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
     TArray< FAssetData > assets;
 
     for ( const auto package_name : SavedPackagesToValidate )
@@ -330,7 +330,7 @@ void UEditorNamingValidatorSubsystem::ValidateAllSavedPackages()
 
 void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const
 {
-    auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
     if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;

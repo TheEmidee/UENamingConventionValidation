@@ -24,6 +24,6 @@ public:
     virtual bool IsEnabled() const;
 
 protected:
-    UPROPERTY( EditAnywhere, Category = "Asset Validation", meta = ( BlueprintProtected = "true" ), DisplayName = "IsEnabled" )
-    bool ItIsEnabled;
+    UPROPERTY( EditAnywhere, Category = "Asset Validation", meta = ( BlueprintProtected = true ), DisplayName = "IsEnabled" )
+    uint8 ItIsEnabled : 1;
 };

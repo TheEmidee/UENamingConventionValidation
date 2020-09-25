@@ -8,6 +8,7 @@
 #include "EditorNamingValidatorSubsystem.generated.h"
 
 class UEditorNamingValidatorBase;
+
 UCLASS( Config = Editor )
 class NAMINGCONVENTIONVALIDATION_API UEditorNamingValidatorSubsystem final : public UEditorSubsystem
 {
@@ -35,7 +36,7 @@ private:
     ENamingConventionValidationResult DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FAssetData & asset_data ) const;
 
     UPROPERTY( config )
-    bool AllowBlueprintValidators;
+    uint8 AllowBlueprintValidators : 1;
 
     UPROPERTY( Transient )
     TMap< UClass *, UEditorNamingValidatorBase * > Validators;
