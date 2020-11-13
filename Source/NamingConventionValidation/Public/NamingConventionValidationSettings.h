@@ -51,10 +51,13 @@ public:
     TArray< FDirectoryPath > ExcludedDirectories;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowRenamingInDevelopersFolder : 1;
+    uint8 LogWarningWhenNoClassDescriptionForAsset : 1;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowRenamingOnlyInGameFolder : 1;
+    uint8 AllowValidationInDevelopersFolder : 1;
+
+    UPROPERTY( config, EditAnywhere )
+    uint8 AllowValidationOnlyInGameFolder : 1;
 
     UPROPERTY( config, EditAnywhere )
     bool DoesValidateOnSave;

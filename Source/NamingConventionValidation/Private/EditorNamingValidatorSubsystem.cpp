@@ -122,8 +122,10 @@ void UEditorNamingValidatorSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
-int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData > & asset_data_list, bool skip_excluded_directories, bool show_if_no_failures ) const
+int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData > & asset_data_list, bool /*skip_excluded_directories*/, const bool show_if_no_failures ) const
 {
+    const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+
     FScopedSlowTask slow_task( 1.0f, LOCTEXT( "NamingConventionValidatingDataTask", "Validating Naming Convention..." ) );
     slow_task.Visibility = show_if_no_failures ? ESlowTaskVisibility::ForceVisible : ESlowTaskVisibility::Invisible;
 
@@ -180,7 +182,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
             break;
             case ENamingConventionValidationResult::Unknown:
             {
-                if ( show_if_no_failures )
+                if ( show_if_no_failures && settings->LogWarningWhenNoClassDescriptionForAsset )
                 {
                     FFormatNamedArguments arguments;
                     arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClass.ToString() ) );
