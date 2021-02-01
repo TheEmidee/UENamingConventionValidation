@@ -32,7 +32,7 @@ void FindAssetDependencies( const FAssetRegistryModule & asset_registry_module, 
                 dependent_assets.Add( asset_data );
 
                 TArray< FName > dependencies;
-                asset_registry_module.Get().GetDependencies( selected_package_name, dependencies, EAssetRegistryDependencyType::Packages );
+                asset_registry_module.Get().GetDependencies( selected_package_name, dependencies, UE::AssetRegistry::EDependencyCategory::Package );
 
                 for ( const auto dependency : dependencies )
                 {

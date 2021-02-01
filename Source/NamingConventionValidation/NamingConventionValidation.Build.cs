@@ -17,7 +17,8 @@ namespace UnrealBuildTool.Rules
                     "Engine",
                     "TargetPlatform",
                     "AssetRegistry",
-                    "EditorSubsystem"
+                    "EditorSubsystem",
+                    "DeveloperSettings"
                 }
             );
 
