@@ -8,6 +8,7 @@
 #include "EditorNamingValidatorSubsystem.generated.h"
 
 class UEditorNamingValidatorBase;
+struct FAssetData;
 
 UCLASS( Config = Editor )
 class NAMINGCONVENTIONVALIDATION_API UEditorNamingValidatorSubsystem final : public UEditorSubsystem

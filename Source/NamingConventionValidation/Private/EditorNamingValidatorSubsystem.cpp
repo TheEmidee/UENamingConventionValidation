@@ -1,14 +1,16 @@
 #include "EditorNamingValidatorSubsystem.h"
 
-#include "EditorNamingValidatorBase.h"
 #include "NamingConventionValidationSettings.h"
 
 #include <AssetRegistryModule.h>
+#include <Editor.h>
+#include <EditorNamingValidatorBase.h>
 #include <EditorUtilityBlueprint.h>
 #include <Logging/MessageLog.h>
 #include <MessageLog/Public/MessageLogInitializationOptions.h>
 #include <MessageLog/Public/MessageLogModule.h>
 #include <Misc/ScopedSlowTask.h>
+#include <UObject/UObjectHash.h>
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationManager"
 
