@@ -1,15 +1,12 @@
 #include "NamingConventionValidationCommandlet.h"
 
-
+#include "NamingConventionValidationLog.h"
 #include "EditorNamingValidatorSubsystem.h"
 
 #include <Editor.h>
 #include <AssetRegistryHelpers.h>
 #include <AssetRegistryModule.h>
 #include <IAssetRegistry.h>
-
-// ReSharper disable once CppInconsistentNaming
-DEFINE_LOG_CATEGORY_STATIC( LogNamingConventionValidation, Warning, All )
 
 UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet()
 {

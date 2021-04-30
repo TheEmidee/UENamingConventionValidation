@@ -54,7 +54,7 @@ void OnPackageSaved( const FString & /*package_file_name*/, UObject * object )
 {
     if ( auto * editor_validation_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >() )
     {
-         editor_validation_subsystem->ValidateSavedPackage( object->GetFName() );
+        editor_validation_subsystem->ValidateSavedPackage( object->GetFName() );
     }
 }
 
@@ -62,7 +62,7 @@ void ValidateAssets( const TArray< FAssetData > selected_assets )
 {
     if ( auto * editor_validation_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >() )
     {
-         editor_validation_subsystem->ValidateAssets( selected_assets );
+        editor_validation_subsystem->ValidateAssets( selected_assets );
     }
 }
 

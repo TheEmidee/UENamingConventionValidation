@@ -1,6 +1,7 @@
 #include "EditorNamingValidatorSubsystem.h"
 
 #include "NamingConventionValidationSettings.h"
+#include "NamingConventionValidationLog.h"
 
 #include <AssetRegistryModule.h>
 #include <Editor.h>
@@ -90,7 +91,7 @@ void UEditorNamingValidatorSubsystem::Initialize( FSubsystemCollectionBase & /*c
     {
         class_description.Class = class_description.ClassPath.LoadSynchronous();
 
-        UE_CLOG( class_description.Class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
+        UE_CLOG( class_description.Class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
     }
 
     settings->ClassDescriptions.Sort();
@@ -98,7 +99,7 @@ void UEditorNamingValidatorSubsystem::Initialize( FSubsystemCollectionBase & /*c
     for ( auto & class_path : settings->ExcludedClassPaths )
     {
         auto * excluded_class = class_path.LoadSynchronous();
-        UE_CLOG( excluded_class == nullptr, LogTemp, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
+        UE_CLOG( excluded_class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
 
         if ( excluded_class != nullptr )
         {
