@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Naming Convention Validation | A UE4 plugin to validate naming convention for the assets in your project.</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Naming Convention Validation" />
+<meta name="author" content="Michael Delva" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A UE4 plugin to validate naming convention for the assets in your project." />
+<meta property="og:description" content="A UE4 plugin to validate naming convention for the assets in your project." />
+<link rel="canonical" href="http://localhost:4000/" />
+<meta property="og:url" content="http://localhost:4000/" />
+<meta property="og:site_name" content="Naming Convention Validation" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Naming Convention Validation" />
+<script type="application/ld+json">
+{"@type":"WebSite","url":"http://localhost:4000/","name":"Naming Convention Validation","author":{"@type":"Person","name":"Michael Delva"},"headline":"Naming Convention Validation","description":"A UE4 plugin to validate naming convention for the assets in your project.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link rel="stylesheet" href="/assets/css/style.css?v=3a82e7b4cba0af1f6ae9808c415fc9c070be9053">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Naming Convention Validation</h1>
+      <h2 class="project-tagline">A UE4 plugin to validate naming convention for the assets in your project.</h2>
+      
+        <a href="https://github.com/TheEmidee/UE4NamingConventionValidation" class="btn">View on GitHub</a>
+      
+      
+    </section>
+
+    <section class="main-content">
+      <p>This plug-in allows you to make sure all assets of your project are correcly named, based on your own rules. You can define a prefix and / or a suffix based on the asset type.</p>
+
+<h3 id="settings">Settings</h3>
+
+<p>You can access the settings from the Project Settings window of the editor.</p>
+
+<p><img src="/assets/img/SettingsMenu.png" alt="Settings Menu" /></p>
+
+<p>From there, you have access to the general settings of the plugin</p>
+
+<p><img src="/assets/img/Settings1.png" alt="PlugIn Settings" /></p>
+
+<p>and you can define the naming convention of your assets based on their class:</p>
+
+<p><img src="/assets/img/Settings2.png" alt="Class naming convention" /></p>
+
+<p>The settings are saved in the <code class="language-plaintext highlighter-rouge">DefaultEditor.ini</code> config file of your project.</p>
+
+<h3 id="validation-in-the-editor">Validation in the editor</h3>
+
+<p>The plug-in adds a new entry to the contextual menu which is opened when you right click on an asset or a folder in the content browser.</p>
+
+<p><img src="/assets/img/ContextualMenu.png" alt="Contextual Menu" /></p>
+
+<p>It then fills the message log with all the errors it could find.</p>
+
+<p><img src="/assets/img/MessageLog.png" alt="Message Log" /></p>
+
+<p>The validation is also executed automatically whenever you create a new asset, or save an existing one (if you enable the option in the settings.)</p>
+
+<h3 id="blueprint-validators">Blueprint validators</h3>
+
+<p>By creating a blueprint which inherits from <code class="language-plaintext highlighter-rouge">UEditorNamingValidatorBase</code> you can easily add custom validation. Also, while the plug-in allows you to validate assets individually based on their type, using a class gives you more power. For example, you can make sure that all assets within a given folder have that folder name in their name, whatever the asset type. This allows you to make sure that for example all the assets in a Weapons folder all have the weapon identifier in their name. You could have for example <code class="language-plaintext highlighter-rouge">Weapons/MachineGun/BP_MachineGun</code> and <code class="language-plaintext highlighter-rouge">Weapons/MachineGun/M_MachineGun</code> be accepted, but not <code class="language-plaintext highlighter-rouge">Weapons/MachineGun/A_Weapon_Fire</code>.</p>
+
+<p>Here’s such a validator:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#pragma once
+
+#include "NamingValidatorBase.h"
+
+#include &lt;CoreMinimal.h&gt;
+
+#include "NamingValidatorInFolder.generated.h"
+
+UCLASS( Abstract, Blueprintable, NotPlaceable )
+class OURGAMEEDITOR_API UNamingValidatorInFolder : public UNamingValidatorBase
+{
+    GENERATED_BODY()
+
+public:
+    UNamingValidatorInFolder();
+
+    bool CanValidateAssetNaming_Implementation( const UClass * asset_class, const FAssetData &amp; asset_data ) const override;
+    ENamingConventionValidationResult ValidateAssetNaming_Implementation( FText &amp; error_message, const UClass * asset_class, const FAssetData &amp; asset_data ) override;
+
+protected:
+    UPROPERTY( EditDefaultsOnly )
+    FString ParentFolderName;
+
+    UPROPERTY( EditDefaultsOnly )
+    FString AssetTypeName;
+
+    UPROPERTY( EditDefaultsOnly )
+    uint8 ItAllowsSubFolders : 1;
+
+    UPROPERTY( EditDefaultsOnly )
+    uint8 ItMustCheckForParentFolderNameInAssetName : 1;
+
+    UPROPERTY( EditDefaultsOnly )
+    uint8 ItMustCheckForRegularAssetNamingValidation : 1;
+
+    UPROPERTY( EditDefaultsOnly )
+    TArray&lt; FString &gt; IgnoredFolders;
+
+private:
+    FString GetContentParentFolderPath() const;
+};
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include "NamingValidatorInFolder.h"
+
+#include "EditorNamingValidatorSubsystem.h"
+
+#include &lt;Editor.h&gt;
+
+UNamingValidatorInFolder::UNamingValidatorInFolder()
+{
+    ItAllowsSubFolders = false;
+    ItMustCheckForParentFolderNameInAssetName = true;
+    ItMustCheckForRegularAssetNamingValidation = true;
+    IgnoredFolders = { "Shared", "Unused" };
+}
+
+bool UNamingValidatorInFolder::CanValidateAssetNaming_Implementation( const UClass * /* asset_class */, const FAssetData &amp; asset_data ) const
+{
+    const auto package_path = asset_data.PackagePath.ToString();
+
+    if ( !package_path.StartsWith( GetContentParentFolderPath() ) )
+    {
+        return false;
+    }
+
+    for ( const auto &amp; ignored_folder : IgnoredFolders )
+    {
+        if ( package_path.Contains( ignored_folder ) )
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+ENamingConventionValidationResult UNamingValidatorInFolder::ValidateAssetNaming_Implementation( FText &amp; error_message, const UClass * /* asset_class */, const FAssetData &amp; asset_data )
+{
+    const auto package_path = asset_data.PackagePath.ToString();
+    const auto remaining_path = package_path.RightChop( GetContentParentFolderPath().Len() );
+
+    TArray&lt; FString &gt; parts;
+    const auto * delimiter = TEXT( "/" );
+    if ( remaining_path.ParseIntoArray( parts, delimiter ) == 0 )
+    {
+        error_message = FText::FromString( FString::Printf( TEXT( "Impossible to parse the path" ) ) );
+        return ENamingConventionValidationResult::Invalid;
+    }
+
+    if ( !ItAllowsSubFolders &amp;&amp; parts.Num() != 1 )
+    {
+        error_message = FText::FromString( FString::Printf( TEXT( "Assets in the folder %s must all be in the same subfolder" ), *ParentFolderName ) );
+        return ENamingConventionValidationResult::Invalid;
+    }
+
+    const auto child_folder_name = parts[ 0 ];
+    const auto child_file_name = asset_data.AssetName.ToString();
+
+    TArray&lt; FString &gt; filename_parts;
+    const auto * filename_delimiter = TEXT( "_" );
+
+    if ( child_file_name.ParseIntoArray( filename_parts, filename_delimiter ) == 0 || filename_parts.Num() &lt; 2 )
+    {
+        error_message = FText::FromString( FString::Printf( TEXT( "Impossible to parse the filename. Asset name must conform to something like BP_XXX" ) ) );
+        return ENamingConventionValidationResult::Invalid;
+    }
+
+    if ( ItMustCheckForParentFolderNameInAssetName )
+    {
+        if ( filename_parts[ 1 ] != AssetTypeName )
+        {
+            error_message = FText::FromString( FString::Printf( TEXT( "Assets in the folder %s must have the %s name right after the asset type prefix" ), *ParentFolderName, *AssetTypeName ) );
+            return ENamingConventionValidationResult::Invalid;
+        }
+
+        if ( filename_parts[ 2 ] != child_folder_name )
+        {
+            error_message = FText::FromString( FString::Printf( TEXT( "Assets in the folder %s must have their name after the asset type prefix and the asset category (Ex: BP_Enemy_Walker)" ), *ParentFolderName ) );
+            return ENamingConventionValidationResult::Invalid;
+        }
+    }
+    else if ( filename_parts[ 1 ] != child_folder_name )
+    {
+        error_message = FText::FromString( FString::Printf( TEXT( "Assets in the folder %s must have their name right after the asset type prefix (Ex: BP_RocketLauncher)" ), *ParentFolderName ) );
+        return ENamingConventionValidationResult::Invalid;
+    }
+
+    if ( !ItMustCheckForRegularAssetNamingValidation )
+    {
+        return ENamingConventionValidationResult::Valid;
+    }
+
+    return GEditor-&gt;GetEditorSubsystem&lt; UEditorNamingValidatorSubsystem &gt;()-&gt;IsAssetNamedCorrectly( error_message, asset_data, false );
+}
+
+FString UNamingValidatorInFolder::GetContentParentFolderPath() const
+{
+    return FString::Printf( TEXT( "/Game/OurGame/%s" ), *ParentFolderName );
+}
+</code></pre></div></div>
+
+<p>You can then create blueprints from that class. They will be registered automatically by the plugin when the editor starts, and will be used when an asset is validated:</p>
+
+<p><img src="/assets/img/BP_NamingValidator_Weapons.png" alt="Naming validation of weapons" />
+<img src="/assets/img/BP_NamingValidator_Enemies.png" alt="Naming validation of enemies" /></p>
+
+<h3 id="commandlet">Commandlet</h3>
+
+<p>The plug-in comes with a commandlet which allows you to validate the naming convention outside of the editor. It’s most useful in a continuous integration environment, where you would want to validate the data before it’s merged into the main branch.</p>
+
+<p>Here’s an example of calling the commandlet:</p>
+
+<p><code class="language-plaintext highlighter-rouge">%UE4PATH%\Binaries\Win64\UE4Editor-Cmd.exe &lt;Your Project Name&gt; -run=NamingConventionValidation -log -log=NamingConventionValidation.log -unattended -nopause -nullrhi</code></p>
+
+<p>You can then parse the log file to list all the errors the commandlet found.</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/TheEmidee/UE4NamingConventionValidation">UE4NamingConventionValidation</a> is maintained by <a href="https://github.com/TheEmidee">TheEmidee</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </section>
+
+    
+  </body>
+</html>
