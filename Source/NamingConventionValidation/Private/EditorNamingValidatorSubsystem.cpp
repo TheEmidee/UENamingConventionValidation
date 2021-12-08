@@ -279,7 +279,6 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 
     for ( auto & asset_data : all_blueprint_asset_data )
     {
-        UClass * parent_class = nullptr;
         FString parent_class_name;
 
         if ( !asset_data.GetTagValue( FBlueprintTags::NativeParentClassPath, parent_class_name ) )
@@ -291,7 +290,7 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
         {
             UObject * outer = nullptr;
             ResolveName( outer, parent_class_name, false, false );
-            parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
+            const UClass * parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
             if ( !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
             {
                 continue;
