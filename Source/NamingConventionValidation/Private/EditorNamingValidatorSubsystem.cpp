@@ -279,7 +279,6 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 
     for ( auto & asset_data : all_blueprint_asset_data )
     {
-        UClass * parent_class = nullptr;
         FString parent_class_name;
 
         if ( !asset_data.GetTagValue( FBlueprintTags::NativeParentClassPath, parent_class_name ) )
@@ -291,7 +290,7 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
         {
             UObject * outer = nullptr;
             ResolveName( outer, parent_class_name, false, false );
-            parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
+            const UClass * parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
             if ( !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
             {
                 continue;
@@ -356,7 +355,16 @@ void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData >
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class, bool can_use_editor_validators ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    const auto asset_name = asset_data.AssetName.ToString();
+    static const FName BlueprintGeneratedClassName( "BlueprintGeneratedClass" );
+
+    auto asset_name = asset_data.AssetName.ToString();
+
+    // Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C. 
+    if ( asset_data.AssetClass == BlueprintGeneratedClassName )
+    {
+        asset_name.RemoveFromEnd( TEXT( "_C" ), ESearchCase::CaseSensitive );
+    }
+
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( const auto * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
@@ -385,7 +393,8 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
     }
 
     static const FName BlueprintClassName( "Blueprint" );
-    if ( asset_data.AssetClass == BlueprintClassName )
+    
+    if ( asset_data.AssetClass == BlueprintClassName || asset_data.AssetClass == BlueprintGeneratedClassName )
     {
         if ( !asset_name.StartsWith( settings->BlueprintsPrefix ) )
         {
