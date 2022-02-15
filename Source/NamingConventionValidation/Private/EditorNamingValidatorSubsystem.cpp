@@ -1,7 +1,7 @@
 #include "EditorNamingValidatorSubsystem.h"
 
-#include "NamingConventionValidationSettings.h"
 #include "NamingConventionValidationLog.h"
+#include "NamingConventionValidationSettings.h"
 
 #include <AssetRegistryModule.h>
 #include <Editor.h>

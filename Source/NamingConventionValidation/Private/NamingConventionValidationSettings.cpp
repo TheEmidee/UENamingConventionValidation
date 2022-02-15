@@ -13,7 +13,21 @@ bool UNamingConventionValidationSettings::IsPathExcludedFromValidation( const FS
 {
     if ( !path.StartsWith( "/Game/" ) && bAllowValidationOnlyInGameFolder )
     {
-        return true;
+        auto can_process_folder = NonGameFoldersDirectoriesToProcess.FindByPredicate( [ &path ]( const auto & directory ) {
+            return path.StartsWith( directory.Path );
+        } ) != nullptr;
+
+        if ( !can_process_folder )
+        {
+            can_process_folder = NonGameFoldersDirectoriesToProcessContainingToken.FindByPredicate( [ &path ]( const auto & token ) {
+                return path.Contains( token );
+            } ) != nullptr;
+        }
+
+        if ( !can_process_folder )
+        {
+            return true;
+        }
     }
 
     if ( path.StartsWith( "/Game/Developers/" ) && !bAllowValidationInDevelopersFolder )
