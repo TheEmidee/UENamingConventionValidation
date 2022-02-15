@@ -51,16 +51,16 @@ public:
     TArray< FDirectoryPath > ExcludedDirectories;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 LogWarningWhenNoClassDescriptionForAsset : 1;
+    uint8 bLogWarningWhenNoClassDescriptionForAsset : 1;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowValidationInDevelopersFolder : 1;
+    uint8 bAllowValidationInDevelopersFolder : 1;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowValidationOnlyInGameFolder : 1;
+    uint8 bAllowValidationOnlyInGameFolder : 1;
 
     UPROPERTY( config, EditAnywhere )
-    bool DoesValidateOnSave;
+    uint8 bDoesValidateOnSave : 1;
 
     UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
