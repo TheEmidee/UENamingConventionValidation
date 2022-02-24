@@ -1,7 +1,7 @@
 #include "EditorNamingValidatorSubsystem.h"
 
-#include "NamingConventionValidationSettings.h"
 #include "NamingConventionValidationLog.h"
+#include "NamingConventionValidationSettings.h"
 
 #include <AssetRegistryModule.h>
 #include <Editor.h>
@@ -186,7 +186,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
             break;
             case ENamingConventionValidationResult::Unknown:
             {
-                if ( show_if_no_failures && settings->LogWarningWhenNoClassDescriptionForAsset )
+                if ( show_if_no_failures && settings->bLogWarningWhenNoClassDescriptionForAsset )
                 {
                     FFormatNamedArguments arguments;
                     arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClass.ToString() ) );
@@ -228,7 +228,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
 void UEditorNamingValidatorSubsystem::ValidateSavedPackage( const FName package_name )
 {
     auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
+    if ( !settings->bDoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -336,7 +336,7 @@ void UEditorNamingValidatorSubsystem::ValidateAllSavedPackages()
 void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
+    if ( !settings->bDoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -359,7 +359,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
 
     auto asset_name = asset_data.AssetName.ToString();
 
-    // Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C. 
+    // Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
     if ( asset_data.AssetClass == BlueprintGeneratedClassName )
     {
         asset_name.RemoveFromEnd( TEXT( "_C" ), ESearchCase::CaseSensitive );
@@ -393,7 +393,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
     }
 
     static const FName BlueprintClassName( "Blueprint" );
-    
+
     if ( asset_data.AssetClass == BlueprintClassName || asset_data.AssetClass == BlueprintGeneratedClassName )
     {
         if ( !asset_name.StartsWith( settings->BlueprintsPrefix ) )
