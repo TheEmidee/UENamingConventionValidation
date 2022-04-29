@@ -18,10 +18,10 @@ struct FNamingConventionValidationClassDescription
 
     bool operator<( const FNamingConventionValidationClassDescription & other ) const
     {
-        return Priority > other.Priority;
+        return Priority > other.Priority || ((Class && other.Class) ? (Class->GetName() < other.Class->GetName()) : false);
     }
 
-    UPROPERTY( config, EditAnywhere )
+    UPROPERTY( config, EditAnywhere, meta = ( AllowAbstract = true ) )
     TSoftClassPtr< UObject > ClassPath;
 
     UPROPERTY( transient )
@@ -37,7 +37,7 @@ struct FNamingConventionValidationClassDescription
     int Priority;
 };
 
-UCLASS( config = Editor )
+UCLASS( config = Editor, DefaultConfig )
 class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final : public UDeveloperSettings
 {
     GENERATED_BODY()
@@ -81,4 +81,10 @@ public:
 
     UPROPERTY( config, EditAnywhere )
     FString BlueprintsPrefix;
+
+    void PostProcessSettings();
+
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

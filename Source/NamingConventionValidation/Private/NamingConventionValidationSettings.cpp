@@ -1,4 +1,5 @@
 #include "NamingConventionValidation/Public/NamingConventionValidationSettings.h"
+#include "NamingConventionValidationLog.h"
 
 UNamingConventionValidationSettings::UNamingConventionValidationSettings()
 {
@@ -45,3 +46,45 @@ bool UNamingConventionValidationSettings::IsPathExcludedFromValidation( const FS
 
     return false;
 }
+
+void UNamingConventionValidationSettings::PostProcessSettings()
+{
+    for ( auto & class_description : ClassDescriptions )
+    {
+        class_description.Class = class_description.ClassPath.LoadSynchronous();
+
+        UE_CLOG( class_description.Class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
+    }
+
+    ClassDescriptions.Sort();
+
+    for ( auto & class_path : ExcludedClassPaths )
+    {
+        auto * excluded_class = class_path.LoadSynchronous();
+        UE_CLOG( excluded_class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
+
+        if ( excluded_class != nullptr )
+        {
+            ExcludedClasses.Add( excluded_class );
+        }
+    }
+
+    static const FDirectoryPath
+        EngineDirectoryPath( { TEXT( "/Engine/" ) } );
+
+    // Cannot use AddUnique since FDirectoryPath does not have operator==
+    if ( !ExcludedDirectories.ContainsByPredicate( []( const auto & item ) {
+             return item.Path == EngineDirectoryPath.Path;
+         } ) )
+    {
+        ExcludedDirectories.Add( EngineDirectoryPath );
+    }
+}
+
+#if WITH_EDITOR
+void UNamingConventionValidationSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+    PostProcessSettings();
+}
+#endif
