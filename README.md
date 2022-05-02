@@ -6,4 +6,4 @@ You can validate individual asset names by defining a prefix and / or a suffix b
 
 But you can also implement more complicated validation rules, like making sure all assets inside a folder have a keyword in their name.
 
-Check the [documentation](https://theemidee.github.io/UE4NamingConventionValidation/) for all the informations.
+Check the [documentation](https://theemidee.github.io/UENamingConventionValidation/) for all the informations.
