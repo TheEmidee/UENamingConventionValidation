@@ -18,10 +18,10 @@ struct FNamingConventionValidationClassDescription
 
     bool operator<( const FNamingConventionValidationClassDescription & other ) const
     {
-        return Priority > other.Priority;
+        return Priority > other.Priority || ((Class && other.Class) ? (Class->GetName() < other.Class->GetName()) : false);
     }
 
-    UPROPERTY( config, EditAnywhere )
+    UPROPERTY( config, EditAnywhere, meta = ( AllowAbstract = true ) )
     TSoftClassPtr< UObject > ClassPath;
 
     UPROPERTY( transient )
@@ -37,7 +37,7 @@ struct FNamingConventionValidationClassDescription
     int Priority;
 };
 
-UCLASS( config = Editor )
+UCLASS( config = Editor, DefaultConfig )
 class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final : public UDeveloperSettings
 {
     GENERATED_BODY()
@@ -51,16 +51,24 @@ public:
     TArray< FDirectoryPath > ExcludedDirectories;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 LogWarningWhenNoClassDescriptionForAsset : 1;
+    uint8 bLogWarningWhenNoClassDescriptionForAsset : 1;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowValidationInDevelopersFolder : 1;
+    uint8 bAllowValidationInDevelopersFolder : 1;
 
     UPROPERTY( config, EditAnywhere )
-    uint8 AllowValidationOnlyInGameFolder : 1;
+    uint8 bAllowValidationOnlyInGameFolder : 1;
+
+    // Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked
+    UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder" ) )
+    TArray< FDirectoryPath > NonGameFoldersDirectoriesToProcess;
+
+    // Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked, and which contain one of those tokens in their path
+    UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder" ) )
+    TArray< FString > NonGameFoldersDirectoriesToProcessContainingToken;
 
     UPROPERTY( config, EditAnywhere )
-    bool DoesValidateOnSave;
+    uint8 bDoesValidateOnSave : 1;
 
     UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )
     TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
@@ -73,4 +81,10 @@ public:
 
     UPROPERTY( config, EditAnywhere )
     FString BlueprintsPrefix;
+
+    void PostProcessSettings();
+
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

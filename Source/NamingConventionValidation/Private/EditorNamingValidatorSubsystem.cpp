@@ -1,7 +1,6 @@
 #include "EditorNamingValidatorSubsystem.h"
 
 #include "NamingConventionValidationSettings.h"
-#include "NamingConventionValidationLog.h"
 
 #include <AssetRegistryModule.h>
 #include <Editor.h>
@@ -82,41 +81,11 @@ void UEditorNamingValidatorSubsystem::Initialize( FSubsystemCollectionBase & /*c
     FMessageLogInitializationOptions init_options;
     init_options.bShowFilters = true;
 
-    auto * settings = GetMutableDefault< UNamingConventionValidationSettings >();
-
     auto & message_log_module = FModuleManager::LoadModuleChecked< FMessageLogModule >( "MessageLog" );
     message_log_module.RegisterLogListing( "NamingConventionValidation", LOCTEXT( "NamingConventionValidation", "Naming Convention Validation" ), init_options );
 
-    for ( auto & class_description : settings->ClassDescriptions )
-    {
-        class_description.Class = class_description.ClassPath.LoadSynchronous();
-
-        UE_CLOG( class_description.Class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the classpath %s" ), *class_description.ClassPath.ToString() );
-    }
-
-    settings->ClassDescriptions.Sort();
-
-    for ( auto & class_path : settings->ExcludedClassPaths )
-    {
-        auto * excluded_class = class_path.LoadSynchronous();
-        UE_CLOG( excluded_class == nullptr, LogNamingConventionValidation, Warning, TEXT( "Impossible to get a valid UClass for the excluded classpath %s" ), *class_path.ToString() );
-
-        if ( excluded_class != nullptr )
-        {
-            settings->ExcludedClasses.Add( excluded_class );
-        }
-    }
-
-    static const FDirectoryPath
-        EngineDirectoryPath( { TEXT( "/Engine/" ) } );
-
-    // Cannot use AddUnique since FDirectoryPath does not have operator==
-    if ( !settings->ExcludedDirectories.ContainsByPredicate( []( const auto & item ) {
-             return item.Path == EngineDirectoryPath.Path;
-         } ) )
-    {
-        settings->ExcludedDirectories.Add( EngineDirectoryPath );
-    }
+    auto * settings = GetMutableDefault< UNamingConventionValidationSettings >();
+    settings->PostProcessSettings();
 }
 
 void UEditorNamingValidatorSubsystem::Deinitialize()
@@ -186,7 +155,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
             break;
             case ENamingConventionValidationResult::Unknown:
             {
-                if ( show_if_no_failures && settings->LogWarningWhenNoClassDescriptionForAsset )
+                if ( show_if_no_failures && settings->bLogWarningWhenNoClassDescriptionForAsset )
                 {
                     FFormatNamedArguments arguments;
                     arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClass.ToString() ) );
@@ -228,7 +197,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
 void UEditorNamingValidatorSubsystem::ValidateSavedPackage( const FName package_name )
 {
     auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
+    if ( !settings->bDoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -279,7 +248,6 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 
     for ( auto & asset_data : all_blueprint_asset_data )
     {
-        UClass * parent_class = nullptr;
         FString parent_class_name;
 
         if ( !asset_data.GetTagValue( FBlueprintTags::NativeParentClassPath, parent_class_name ) )
@@ -291,7 +259,7 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
         {
             UObject * outer = nullptr;
             ResolveName( outer, parent_class_name, false, false );
-            parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
+            const UClass * parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
             if ( !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
             {
                 continue;
@@ -337,7 +305,7 @@ void UEditorNamingValidatorSubsystem::ValidateAllSavedPackages()
 void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    if ( !settings->DoesValidateOnSave || GEditor->IsAutosaving() )
+    if ( !settings->bDoesValidateOnSave || GEditor->IsAutosaving() )
     {
         return;
     }
@@ -356,7 +324,16 @@ void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData >
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class, bool can_use_editor_validators ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    const auto asset_name = asset_data.AssetName.ToString();
+    static const FName BlueprintGeneratedClassName( "BlueprintGeneratedClass" );
+
+    auto asset_name = asset_data.AssetName.ToString();
+
+    // Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
+    if ( asset_data.AssetClass == BlueprintGeneratedClassName )
+    {
+        asset_name.RemoveFromEnd( TEXT( "_C" ), ESearchCase::CaseSensitive );
+    }
+
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( const auto * asset_real_class = asset_class_path.TryLoadClass< UObject >() )
@@ -385,7 +362,8 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
     }
 
     static const FName BlueprintClassName( "Blueprint" );
-    if ( asset_data.AssetClass == BlueprintClassName )
+
+    if ( asset_data.AssetClass == BlueprintClassName || asset_data.AssetClass == BlueprintGeneratedClassName )
     {
         if ( !asset_name.StartsWith( settings->BlueprintsPrefix ) )
         {
@@ -418,17 +396,32 @@ bool UEditorNamingValidatorSubsystem::IsClassExcluded( FText & error_message, co
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesClassDescriptions( FText & error_message, const UClass * asset_class, const FString & asset_name ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
+    UClass* MostPreciseClass = UObject::StaticClass();
+    ENamingConventionValidationResult Result = ENamingConventionValidationResult::Unknown;
 
     for ( const auto & class_description : settings->ClassDescriptions )
     {
-        if ( asset_class->IsChildOf( class_description.Class ) )
+        const bool bClassFilterMatches = asset_class->IsChildOf( class_description.Class );
+        const bool bClassIsMoreOrSamePrecise = class_description.Class->IsChildOf(MostPreciseClass);
+        const bool bClassIsSamePrecise = bClassIsMoreOrSamePrecise && class_description.Class == MostPreciseClass;
+        const bool bClassIsMorePrecise = bClassIsMoreOrSamePrecise && class_description.Class != MostPreciseClass;
+        // had an error on this precision level before. but there could be another filter that passes
+        const bool bSamePrecisionCanBeValid = bClassIsSamePrecise && Result != ENamingConventionValidationResult::Valid;
+
+        const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
+        if ( bCheckAffixes )
         {
+            MostPreciseClass = class_description.Class;
+
+            error_message = FText::GetEmpty();
+            Result = ENamingConventionValidationResult::Valid;
+
             if ( !class_description.Prefix.IsEmpty() )
             {
                 if ( !asset_name.StartsWith( class_description.Prefix ) )
                 {
                     error_message = FText::Format( LOCTEXT( "WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Prefix ) );
-                    return ENamingConventionValidationResult::Invalid;
+                    Result = ENamingConventionValidationResult::Invalid;
                 }
             }
 
@@ -437,15 +430,13 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
                 if ( !asset_name.EndsWith( class_description.Suffix ) )
                 {
                     error_message = FText::Format( LOCTEXT( "WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}" ), FText::FromString( class_description.ClassPath.ToString() ), FText::FromString( class_description.Suffix ) );
-                    return ENamingConventionValidationResult::Invalid;
+                    Result = ENamingConventionValidationResult::Invalid;
                 }
             }
-
-            return ENamingConventionValidationResult::Valid;
         }
     }
 
-    return ENamingConventionValidationResult::Unknown;
+    return Result;
 }
 
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesValidators( FText & error_message, const UClass * asset_class, const FAssetData & asset_data ) const
