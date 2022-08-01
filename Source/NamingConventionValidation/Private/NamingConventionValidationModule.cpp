@@ -15,6 +15,7 @@
 #include <Misc/MessageDialog.h>
 #include <Modules/ModuleManager.h>
 #include <UObject/Object.h>
+#include <UObject/ObjectSaveContext.h>
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationModule"
 
@@ -50,11 +51,11 @@ void FindAssetDependencies( const FAssetRegistryModule & asset_registry_module, 
     }
 }
 
-void OnPackageSaved( const FString & /*package_file_name*/, UObject * object )
+void OnPackageSaved( const FString & /*package_file_name*/, UPackage* package, FObjectPostSaveContext context )
 {
     if ( auto * editor_validation_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >() )
     {
-        editor_validation_subsystem->ValidateSavedPackage( object->GetFName() );
+        editor_validation_subsystem->ValidateSavedPackage( package->GetFName() );
     }
 }
 
@@ -204,7 +205,7 @@ void FNamingConventionValidationModule::StartupModule()
         auto & level_editor_module = FModuleManager::LoadModuleChecked< FLevelEditorModule >( "LevelEditor" );
         level_editor_module.GetMenuExtensibilityManager()->AddExtender( MenuExtender );
 
-        OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddStatic( OnPackageSaved );
+        OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddStatic( OnPackageSaved );
     }
 }
 
