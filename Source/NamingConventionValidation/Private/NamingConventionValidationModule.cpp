@@ -230,7 +230,7 @@ void FNamingConventionValidationModule::ShutdownModule()
         }
         MenuExtender = nullptr;
 
-        UPackage::PackageSavedEvent.Remove( OnPackageSavedDelegateHandle );
+        UPackage::PackageSavedWithContextEvent.Remove( OnPackageSavedDelegateHandle );
     }
 }
 
