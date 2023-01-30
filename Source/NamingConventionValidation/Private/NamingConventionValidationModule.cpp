@@ -3,7 +3,7 @@
 #include "EditorNamingValidatorSubsystem.h"
 #include "NamingConventionValidationCommandlet.h"
 
-#include <AssetRegistryModule.h>
+#include <AssetRegistry/AssetRegistryModule.h>
 #include <AssetToolsModule.h>
 #include <ContentBrowserDelegates.h>
 #include <ContentBrowserModule.h>
@@ -41,7 +41,7 @@ void FindAssetDependencies( const FAssetRegistryModule & asset_registry_module, 
                     auto dependency_object_string = FString::Printf( TEXT( "%s.%s" ), *dependency_package_string, *FPackageName::GetLongPackageAssetName( dependency_package_string ) );
 
                     // recurse on each dependency
-                    const FName object_path( *dependency_object_string );
+                    const FSoftObjectPath object_path( *dependency_object_string );
                     auto dependent_asset = asset_registry_module.Get().GetAssetByObjectPath( object_path );
 
                     FindAssetDependencies( asset_registry_module, dependent_asset, dependent_assets );
@@ -164,7 +164,7 @@ void NamingConventionValidationMenuCreationDelegate( FMenuBuilder & menu_builder
     menu_builder.AddMenuEntry(
         TAttribute< FText >::Create( &MenuValidateDataGetTitle ),
         LOCTEXT( "NamingConventionValidationTooltip", "Validates all naming convention in content directory." ),
-        FSlateIcon( FEditorStyle::GetStyleSetName(), "DeveloperTools.MenuIcon" ),
+        FSlateIcon( FAppStyle::GetAppStyleSetName(), "DeveloperTools.MenuIcon" ),
         FUIAction( FExecuteAction::CreateStatic( &MenuValidateData ) ) );
     menu_builder.EndSection();
 }
