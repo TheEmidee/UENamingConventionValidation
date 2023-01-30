@@ -257,10 +257,14 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 
         if ( !parent_class_name.IsEmpty() )
         {
-            UObject * outer = nullptr;
-            ResolveName( outer, parent_class_name, false, false );
-            if ( const UClass * parent_class = FindObject< UClass >( FTopLevelAssetPath( FName( TEXT( "/" ) ), *parent_class_name ) ); 
-                !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
+            const UClass* parent_class = nullptr;
+            UObject* Outer = nullptr;
+
+            ResolveName(Outer, parent_class_name, false, false);
+            parent_class = FindObject<UClass>(Outer, *parent_class_name);
+
+            if ( parent_class == nullptr
+                || !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
             {
                 continue;
             }
