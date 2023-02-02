@@ -2,7 +2,7 @@
     "FileVersion" : 3,
     "Version": 1.1,
     "VersionName": "1.1",
-    "EngineVersion": "5.0.0",
+    
     "FriendlyName" : "Naming Convention Validation",
     "Description" : "An asset naming convention validation plug-in.",
     "Category" : "Validation",

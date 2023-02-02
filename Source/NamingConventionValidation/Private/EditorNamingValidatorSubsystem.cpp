@@ -2,7 +2,7 @@
 
 #include "NamingConventionValidationSettings.h"
 
-#include <AssetRegistryModule.h>
+#include <AssetRegistry/AssetRegistryModule.h>
 #include <Editor.h>
 #include <EditorNamingValidatorBase.h>
 #include <EditorUtilityBlueprint.h>
@@ -24,7 +24,7 @@ bool TryGetAssetDataRealClass( FName & asset_class, const FAssetData & asset_dat
     {
         if ( !asset_data.GetTagValue( NativeClassKey, asset_class ) )
         {
-            if ( auto * asset = asset_data.GetAsset() )
+            if ( const auto * asset = asset_data.GetAsset() )
             {
                 const FSoftClassPath class_path( asset->GetClass() );
                 asset_class = *class_path.ToString();
@@ -62,7 +62,7 @@ void UEditorNamingValidatorSubsystem::Initialize( FSubsystemCollectionBase & /*c
 
     TArray< UClass * > validator_classes;
     GetDerivedClasses( UEditorNamingValidatorBase::StaticClass(), validator_classes );
-    for ( auto * validator_class : validator_classes )
+    for ( const auto * validator_class : validator_classes )
     {
         if ( !validator_class->HasAllClassFlags( CLASS_Abstract ) )
         {
@@ -158,7 +158,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
                 if ( show_if_no_failures && settings->bLogWarningWhenNoClassDescriptionForAsset )
                 {
                     FFormatNamedArguments arguments;
-                    arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClass.ToString() ) );
+                    arguments.Add( TEXT( "ClassName" ), FText::FromString( asset_data.AssetClassPath.ToString() ) );
 
                     data_validation_log.Warning()
                         ->AddToken( FAssetNameToken::Create( asset_data.PackageName.ToString() ) )
@@ -244,7 +244,7 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
     // Locate all validators (include unloaded)
     const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( TEXT( "AssetRegistry" ) );
     TArray< FAssetData > all_blueprint_asset_data;
-    asset_registry_module.Get().GetAssetsByClass( UEditorUtilityBlueprint::StaticClass()->GetFName(), all_blueprint_asset_data, true );
+    asset_registry_module.Get().GetAssetsByClass( UEditorUtilityBlueprint::StaticClass()->GetClassPathName(), all_blueprint_asset_data, true );
 
     for ( auto & asset_data : all_blueprint_asset_data )
     {
@@ -257,10 +257,14 @@ void UEditorNamingValidatorSubsystem::RegisterBlueprintValidators()
 
         if ( !parent_class_name.IsEmpty() )
         {
-            UObject * outer = nullptr;
-            ResolveName( outer, parent_class_name, false, false );
-            const UClass * parent_class = FindObject< UClass >( ANY_PACKAGE, *parent_class_name );
-            if ( !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
+            const UClass* parent_class = nullptr;
+            UObject* Outer = nullptr;
+
+            ResolveName(Outer, parent_class_name, false, false);
+            parent_class = FindObject<UClass>(Outer, *parent_class_name);
+
+            if ( parent_class == nullptr
+                || !parent_class->IsChildOf( UEditorNamingValidatorBase::StaticClass() ) )
             {
                 continue;
             }
@@ -324,12 +328,12 @@ void UEditorNamingValidatorSubsystem::ValidateOnSave( const TArray< FAssetData >
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchNameConvention( FText & error_message, const FAssetData & asset_data, const FName asset_class, bool can_use_editor_validators ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    static const FName BlueprintGeneratedClassName( "BlueprintGeneratedClass" );
+    static const FTopLevelAssetPath BlueprintGeneratedClassName( FName( TEXT( "/" ) ), FName( TEXT( "BlueprintGeneratedClass" ) ) );
 
     auto asset_name = asset_data.AssetName.ToString();
 
     // Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
-    if ( asset_data.AssetClass == BlueprintGeneratedClassName )
+    if ( asset_data.AssetClassPath == BlueprintGeneratedClassName )
     {
         asset_name.RemoveFromEnd( TEXT( "_C" ), ESearchCase::CaseSensitive );
     }
@@ -361,9 +365,9 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         }
     }
 
-    static const FName BlueprintClassName( "Blueprint" );
+    static const FTopLevelAssetPath BlueprintClassName( FName( TEXT( "/" ) ), FName( TEXT( "Blueprint" ) ) );
 
-    if ( asset_data.AssetClass == BlueprintClassName || asset_data.AssetClass == BlueprintGeneratedClassName )
+    if ( asset_data.AssetClassPath == BlueprintClassName || asset_data.AssetClassPath == BlueprintGeneratedClassName )
     {
         if ( !asset_name.StartsWith( settings->BlueprintsPrefix ) )
         {
@@ -381,7 +385,7 @@ bool UEditorNamingValidatorSubsystem::IsClassExcluded( FText & error_message, co
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
 
-    for ( auto * excluded_class : settings->ExcludedClasses )
+    for ( const auto * excluded_class : settings->ExcludedClasses )
     {
         if ( asset_class->IsChildOf( excluded_class ) )
         {
@@ -396,7 +400,7 @@ bool UEditorNamingValidatorSubsystem::IsClassExcluded( FText & error_message, co
 ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatchesClassDescriptions( FText & error_message, const UClass * asset_class, const FString & asset_name ) const
 {
     const auto * settings = GetDefault< UNamingConventionValidationSettings >();
-    UClass* MostPreciseClass = UObject::StaticClass();
+    const UClass* MostPreciseClass = UObject::StaticClass();
     ENamingConventionValidationResult Result = ENamingConventionValidationResult::Unknown;
 
     for ( const auto & class_description : settings->ClassDescriptions )
