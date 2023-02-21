@@ -451,7 +451,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         {
             const auto result = validator_pair.Value->ValidateAssetNaming( error_message, asset_class, asset_data );
 
-            if ( result != ENamingConventionValidationResult::Unknown )
+            if ( result != ENamingConventionValidationResult::Valid )
             {
                 return result;
             }
