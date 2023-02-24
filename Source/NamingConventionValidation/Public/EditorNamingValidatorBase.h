@@ -7,7 +7,7 @@
 
 #include "EditorNamingValidatorBase.generated.h"
 
-UCLASS()
+UCLASS( Abstract, Blueprintable, meta = (ShowWorldContextPin) )
 class NAMINGCONVENTIONVALIDATION_API UEditorNamingValidatorBase : public UObject
 {
     GENERATED_BODY()
