@@ -365,7 +365,7 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         }
     }
 
-    static const FTopLevelAssetPath BlueprintClassName( FName( TEXT( "/" ) ), FName( TEXT( "Blueprint" ) ) );
+    static const FTopLevelAssetPath BlueprintClassName( FName( TEXT( "/Script/Engine" ) ), FName( TEXT( "Blueprint" ) ) );
 
     if ( asset_data.AssetClassPath == BlueprintClassName || asset_data.AssetClassPath == BlueprintGeneratedClassName )
     {
