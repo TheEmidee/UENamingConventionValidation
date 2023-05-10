@@ -405,6 +405,14 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
 
     for ( const auto & class_description : settings->ClassDescriptions )
     {
+        if ( class_description.Class == nullptr ) 
+        {
+            FMessageLog data_validation_log( "NamingConventionValidation" );
+            data_validation_log.Warning()
+                    ->AddToken( FTextToken::Create( LOCTEXT( "InvalidClassDescription", "invalid class description found." ) ) );
+            continue;
+        }
+
         const bool bClassFilterMatches = asset_class->IsChildOf( class_description.Class );
         const bool bClassIsMoreOrSamePrecise = class_description.Class->IsChildOf(MostPreciseClass);
         const bool bClassIsSamePrecise = bClassIsMoreOrSamePrecise && class_description.Class == MostPreciseClass;
