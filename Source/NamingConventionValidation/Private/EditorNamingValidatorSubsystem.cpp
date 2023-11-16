@@ -7,8 +7,8 @@
 #include <EditorNamingValidatorBase.h>
 #include <EditorUtilityBlueprint.h>
 #include <Logging/MessageLog.h>
-#include <MessageLog/Public/MessageLogInitializationOptions.h>
-#include <MessageLog/Public/MessageLogModule.h>
+#include <MessageLogInitializationOptions.h>
+#include <MessageLogModule.h>
 #include <Misc/ScopedSlowTask.h>
 #include <UObject/UObjectHash.h>
 
