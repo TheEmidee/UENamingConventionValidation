@@ -21,6 +21,8 @@ struct FNamingConventionValidationClassDescription
         return Priority > other.Priority || ((Class && other.Class) ? (Class->GetName() < other.Class->GetName()) : false);
     }
 
+    FString ToString() const;
+
     UPROPERTY( config, EditAnywhere, meta = ( AllowAbstract = true ) )
     TSoftClassPtr< UObject > ClassPath;
 

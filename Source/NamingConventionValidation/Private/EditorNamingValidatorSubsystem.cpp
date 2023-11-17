@@ -408,8 +408,9 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         if ( class_description.Class == nullptr ) 
         {
             FMessageLog data_validation_log( "NamingConventionValidation" );
-            data_validation_log.Warning()
-                    ->AddToken( FTextToken::Create( LOCTEXT( "InvalidClassDescription", "invalid class description found." ) ) );
+            data_validation_log
+                .Warning()
+                ->AddToken( FTextToken::Create( FText::FromString( FString::Printf( TEXT( "invalid class description found : %s" ), *class_description.ToString() ) ) ) );
             continue;
         }
 

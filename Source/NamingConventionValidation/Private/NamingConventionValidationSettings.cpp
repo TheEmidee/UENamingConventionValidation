@@ -1,6 +1,16 @@
 #include "NamingConventionValidation/Public/NamingConventionValidationSettings.h"
 #include "NamingConventionValidationLog.h"
 
+FString FNamingConventionValidationClassDescription::ToString() const
+{
+    return FString::Printf( TEXT( "ClassPath : %s - Prefix : %s - Suffix : %s - Priority : %i" ),
+        *ClassPath.ToString(),
+        *Prefix,
+        *Suffix,
+        Priority
+        );
+}
+
 UNamingConventionValidationSettings::UNamingConventionValidationSettings()
 {
     bLogWarningWhenNoClassDescriptionForAsset = false;
