@@ -1,4 +1,4 @@
-# UE4 Naming Convention Validation
+# UE Naming Convention Validation
 
 This plug-in allows you to make sure all assets of your project are correcly named, based on your own rules. 
 
