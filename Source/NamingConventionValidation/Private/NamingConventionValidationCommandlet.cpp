@@ -22,8 +22,18 @@ int32 UNamingConventionValidationCommandlet::Main( const FString & params )
     TMap< FString, FString > params_map;
     ParseCommandLine( *params, tokens, switches, params_map );
 
+    TArray< FString > paths;
+    if ( const auto * path = params_map.Find( TEXT( "Paths" ) ) ) 
+    {
+        path->ParseIntoArray( paths, TEXT( "+" ) );
+    }
+    else 
+    {
+        paths.Add( TEXT( "/Game" ) );
+    }
+
     // validate data
-    if ( !ValidateData() )
+    if ( !ValidateData( paths ) )
     {
         UE_LOG( LogNamingConventionValidation, Warning, TEXT( "Errors occurred while validating naming convention" ) );
         return 2; // return something other than 1 for error since the engine will return 1 if any other system (possibly unrelated) logged errors during execution.
@@ -35,18 +45,18 @@ int32 UNamingConventionValidationCommandlet::Main( const FString & params )
 }
 
 //static
-bool UNamingConventionValidationCommandlet::ValidateData()
+bool UNamingConventionValidationCommandlet::ValidateData( TArrayView< FString > paths )
 {
-    auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
+    const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
 
     TArray< FAssetData > asset_data_list;
 
     FARFilter filter;
     filter.bRecursivePaths = true;
-    filter.PackagePaths.Add( "/Game" );
+    filter.PackagePaths.Append( paths );
     asset_registry_module.Get().GetAssets( filter, asset_data_list );
 
-    auto * editor_validator_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >();
+    const auto * editor_validator_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >();
     check( editor_validator_subsystem );
 
     // ReSharper disable once CppExpressionWithoutSideEffects

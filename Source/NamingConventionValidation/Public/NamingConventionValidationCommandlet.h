@@ -17,5 +17,5 @@ public:
     int32 Main( const FString & params ) override;
     // End UCommandlet Interface
 
-    static bool ValidateData();
+    static bool ValidateData( TArrayView<FString> paths );
 };
