@@ -48,6 +48,7 @@ int32 UNamingConventionValidationCommandlet::Main( const FString & params )
 bool UNamingConventionValidationCommandlet::ValidateData( TArrayView< FString > paths )
 {
     const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
+    asset_registry_module.Get().ScanPathsSynchronous( TArray< FString >( paths ), true );
 
     TArray< FAssetData > asset_data_list;
 
