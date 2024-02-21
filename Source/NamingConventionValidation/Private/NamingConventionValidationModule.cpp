@@ -143,14 +143,15 @@ FText MenuValidateDataGetTitle()
 void MenuValidateData()
 {
     // make sure the asset registry is finished building
-    auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
+    const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( "AssetRegistry" );
     if ( asset_registry_module.Get().IsLoadingAssets() )
     {
         FMessageDialog::Open( EAppMsgType::Ok, LOCTEXT( "AssetsStillScanningError", "Cannot run naming convention validation while still discovering assets." ) );
         return;
     }
 
-    const auto success = UNamingConventionValidationCommandlet::ValidateData();
+    TArray< FString > paths = { TEXT( "/Game" ) };
+    const auto success = UNamingConventionValidationCommandlet::ValidateData( paths );
 
     if ( !success )
     {
