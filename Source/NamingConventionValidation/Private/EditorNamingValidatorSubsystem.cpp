@@ -1,5 +1,6 @@
 #include "EditorNamingValidatorSubsystem.h"
 
+#include "NamingConventionValidationLog.h"
 #include "NamingConventionValidationSettings.h"
 
 #include <AssetRegistry/AssetRegistryModule.h>
@@ -119,12 +120,14 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
 
     for ( const auto & asset_data : asset_data_list )
     {
-        slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Validating Naming Convention {0}" ), FText::FromString( asset_data.GetFullName() ) ) );
+        const auto text = FText::Format( LOCTEXT( "ValidatingNamingConventionFilename", "Validating {0}" ), FText::FromString( asset_data.GetFullName() ) );
+        slow_task.EnterProgressFrame( 1.0f / num_files_to_validate, text );
+
+        UE_LOG( LogNamingConventionValidation, Display, TEXT( "%s" ), *text.ToString() );
 
         FText error_message;
-        const auto result = IsAssetNamedCorrectly( error_message, asset_data );
 
-        switch ( result )
+        switch ( IsAssetNamedCorrectly( error_message, asset_data ) )
         {
             case ENamingConventionValidationResult::Excluded:
             {
@@ -184,7 +187,7 @@ int32 UEditorNamingValidatorSubsystem::ValidateAssets( const TArray< FAssetData 
         arguments.Add( TEXT( "NumSkipped" ), num_files_skipped );
         arguments.Add( TEXT( "NumUnableToValidate" ), num_files_unable_to_validate );
 
-        auto validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
+        const auto validation_log = has_failed ? data_validation_log.Error() : data_validation_log.Info();
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "SuccessOrFailure", "NamingConvention Validation {Result}." ), arguments ) ) );
         validation_log->AddToken( FTextToken::Create( FText::Format( LOCTEXT( "ResultsSummary", "Files Checked: {NumChecked}, Passed: {NumValid}, Failed: {NumInvalid}, Skipped: {NumSkipped}, Unable to validate: {NumUnableToValidate}" ), arguments ) ) );
 
@@ -209,8 +212,9 @@ void UEditorNamingValidatorSubsystem::ValidateSavedPackage( const FName package_
 
 void UEditorNamingValidatorSubsystem::AddValidator( UEditorNamingValidatorBase * validator )
 {
-    if ( validator )
+    if ( validator != nullptr )
     {
+        UE_LOG( LogNamingConventionValidation, Display, TEXT( "Added blueprint validator %s" ), *validator->GetName() );
         Validators.Add( validator->GetClass(), validator );
     }
 }
