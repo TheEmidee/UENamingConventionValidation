@@ -25,9 +25,9 @@ public:
     void ValidateSavedPackage( FName package_name );
     void AddValidator( UEditorNamingValidatorBase * validator );
     ENamingConventionValidationResult IsAssetNamedCorrectly( FText & error_message, const FAssetData & asset_data, bool can_use_editor_validators = true ) const;
+    void RegisterBlueprintValidators();
 
 private:
-    void RegisterBlueprintValidators();
     void CleanupValidators();
     void ValidateAllSavedPackages();
     void ValidateOnSave( const TArray< FAssetData > & asset_data_list ) const;

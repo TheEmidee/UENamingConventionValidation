@@ -4,7 +4,6 @@
 #include "EditorNamingValidatorSubsystem.h"
 
 #include <Editor.h>
-#include <AssetRegistry/AssetRegistryHelpers.h>
 #include <AssetRegistry/AssetRegistryModule.h>
 #include <AssetRegistry/IAssetRegistry.h>
 
@@ -47,8 +46,13 @@ int32 UNamingConventionValidationCommandlet::Main( const FString & params )
 //static
 bool UNamingConventionValidationCommandlet::ValidateData( TArrayView< FString > paths )
 {
+    auto * editor_validator_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >();
+    check( editor_validator_subsystem );
+
     const auto & asset_registry_module = FModuleManager::LoadModuleChecked< FAssetRegistryModule >( AssetRegistryConstants::ModuleName );
     asset_registry_module.Get().ScanPathsSynchronous( TArray< FString >( paths ), true );
+
+    editor_validator_subsystem->RegisterBlueprintValidators();
 
     TArray< FAssetData > asset_data_list;
 
@@ -57,10 +61,6 @@ bool UNamingConventionValidationCommandlet::ValidateData( TArrayView< FString > 
     filter.PackagePaths.Append( paths );
     asset_registry_module.Get().GetAssets( filter, asset_data_list );
 
-    const auto * editor_validator_subsystem = GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >();
-    check( editor_validator_subsystem );
-
-    // ReSharper disable once CppExpressionWithoutSideEffects
     editor_validator_subsystem->ValidateAssets( asset_data_list );
 
     return true;
