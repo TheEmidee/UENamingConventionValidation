@@ -338,6 +338,21 @@ ENamingConventionValidationResult UEditorNamingValidatorSubsystem::DoesAssetMatc
         asset_name.RemoveFromEnd( TEXT( "_C" ), ESearchCase::CaseSensitive );
     }
 
+    if ( auto * object = asset_data.GetAsset())
+    {
+        if ( auto * blueprint = Cast< UBlueprint >( object ) )
+        {
+            if ( !blueprint->MacroGraphs.IsEmpty() )
+            {
+                if ( !asset_name.StartsWith( settings->BlueprintMacrosLibrariesPrefix ) )
+                {
+                    error_message = FText::Format( LOCTEXT( "WrongPrefix", "Blueprint Macro Libraries must have a name which starts with {0}" ), FText::FromString( settings->BlueprintMacrosLibrariesPrefix ) );
+                    return ENamingConventionValidationResult::Invalid;
+                }
+            }
+        }
+    }
+
     const FSoftClassPath asset_class_path( asset_class.ToString() );
 
     if ( const auto * asset_real_class = asset_class_path.TryLoadClass< UObject >() )

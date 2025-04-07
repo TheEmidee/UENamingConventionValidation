@@ -17,7 +17,8 @@ UNamingConventionValidationSettings::UNamingConventionValidationSettings()
     bAllowValidationInDevelopersFolder = false;
     bAllowValidationOnlyInGameFolder = true;
     bDoesValidateOnSave = true;
-    BlueprintsPrefix = "BP_";
+    BlueprintsPrefix = TEXT( "BP_" );
+    BlueprintMacrosLibrariesPrefix = TEXT( "BPML_" );
 }
 
 bool UNamingConventionValidationSettings::IsPathExcludedFromValidation( const FString & path ) const

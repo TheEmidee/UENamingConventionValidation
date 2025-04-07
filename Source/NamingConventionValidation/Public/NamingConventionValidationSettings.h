@@ -84,6 +84,9 @@ public:
     UPROPERTY( config, EditAnywhere )
     FString BlueprintsPrefix;
 
+    UPROPERTY( config, EditAnywhere )
+    FString BlueprintMacrosLibrariesPrefix;
+
     void PostProcessSettings();
 
 #if WITH_EDITOR
