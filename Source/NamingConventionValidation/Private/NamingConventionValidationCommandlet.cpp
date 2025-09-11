@@ -3,9 +3,9 @@
 #include "NamingConventionValidationLog.h"
 #include "EditorNamingValidatorSubsystem.h"
 
-#include <Editor.h>
-#include <AssetRegistry/AssetRegistryModule.h>
-#include <AssetRegistry/IAssetRegistry.h>
+#include "Editor.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/IAssetRegistry.h"
 
 UNamingConventionValidationCommandlet::UNamingConventionValidationCommandlet()
 {

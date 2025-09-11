@@ -2,7 +2,7 @@
 
 #include "EditorNamingValidatorBase.h"
 
-#include <CoreMinimal.h>
+#include "CoreMinimal.h"
 
 #include "NamingValidatorFromFolder.generated.h"
 

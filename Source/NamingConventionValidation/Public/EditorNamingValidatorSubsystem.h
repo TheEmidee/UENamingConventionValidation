@@ -2,8 +2,8 @@
 
 #include "NamingConventionValidationTypes.h"
 
-#include <CoreMinimal.h>
-#include <EditorSubsystem.h>
+#include "CoreMinimal.h"
+#include "EditorSubsystem.h"
 
 #include "EditorNamingValidatorSubsystem.generated.h"
 

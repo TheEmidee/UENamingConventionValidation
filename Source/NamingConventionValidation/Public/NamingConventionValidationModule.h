@@ -1,9 +1,9 @@
 #pragma once
 
-#include <CoreMinimal.h>
-#include <Modules/ModuleInterface.h>
-#include <Modules/ModuleManager.h>
-#include <Stats/Stats.h>
+#include "CoreMinimal.h"
+#include "Modules/ModuleInterface.h"
+#include "Modules/ModuleManager.h"
+#include "Stats/Stats.h"
 
 class NAMINGCONVENTIONVALIDATION_API INamingConventionValidationModule : public IModuleInterface
 {

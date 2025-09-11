@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Commandlets/Commandlet.h>
+#include "Commandlets/Commandlet.h"
 
 #include "NamingConventionValidationCommandlet.generated.h"
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <CoreMinimal.h>
-#include <Engine/DeveloperSettings.h>
-#include <Engine/EngineTypes.h>
+#include "CoreMinimal.h"
+#include "Engine/DeveloperSettings.h"
+#include "Engine/EngineTypes.h"
 
 #include "NamingConventionValidationSettings.generated.h"
 

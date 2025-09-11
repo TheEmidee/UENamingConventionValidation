@@ -3,15 +3,15 @@
 #include "NamingConventionValidationLog.h"
 #include "NamingConventionValidationSettings.h"
 
-#include <AssetRegistry/AssetRegistryModule.h>
-#include <Editor.h>
-#include <EditorNamingValidatorBase.h>
-#include <EditorUtilityBlueprint.h>
-#include <Logging/MessageLog.h>
-#include <MessageLogInitializationOptions.h>
-#include <MessageLogModule.h>
-#include <Misc/ScopedSlowTask.h>
-#include <UObject/UObjectHash.h>
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Editor.h"
+#include "EditorNamingValidatorBase.h"
+#include "EditorUtilityBlueprint.h"
+#include "Logging/MessageLog.h"
+#include "MessageLogInitializationOptions.h"
+#include "MessageLogModule.h"
+#include "Misc/ScopedSlowTask.h"
+#include "UObject/UObjectHash.h"
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationManager"
 

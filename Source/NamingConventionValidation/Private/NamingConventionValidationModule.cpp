@@ -3,19 +3,19 @@
 #include "EditorNamingValidatorSubsystem.h"
 #include "NamingConventionValidationCommandlet.h"
 
-#include <AssetRegistry/AssetRegistryModule.h>
-#include <AssetToolsModule.h>
-#include <ContentBrowserDelegates.h>
-#include <ContentBrowserModule.h>
-#include <EditorStyleSet.h>
-#include <Framework/Application/SlateApplication.h>
-#include <Framework/MultiBox/MultiBoxBuilder.h>
-#include <Framework/MultiBox/MultiBoxExtender.h>
-#include <LevelEditor.h>
-#include <Misc/MessageDialog.h>
-#include <Modules/ModuleManager.h>
-#include <UObject/Object.h>
-#include <UObject/ObjectSaveContext.h>
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetToolsModule.h"
+#include "ContentBrowserDelegates.h"
+#include "ContentBrowserModule.h"
+#include "EditorStyleSet.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
+#include "LevelEditor.h"
+#include "Misc/MessageDialog.h"
+#include "Modules/ModuleManager.h"
+#include "UObject/Object.h"
+#include "UObject/ObjectSaveContext.h"
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationModule"
 

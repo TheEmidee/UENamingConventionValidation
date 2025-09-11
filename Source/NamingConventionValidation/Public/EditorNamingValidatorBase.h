@@ -2,8 +2,8 @@
 
 #include "NamingConventionValidationTypes.h"
 
-#include <CoreMinimal.h>
-#include <UObject/NoExportTypes.h>
+#include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
 
 #include "EditorNamingValidatorBase.generated.h"
 
