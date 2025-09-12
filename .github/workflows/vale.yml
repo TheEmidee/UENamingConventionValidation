@@ -1,0 +1,16 @@
+name: Vale
+on: [pull_request]
+
+jobs:
+  vale:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Vale
+      uses: errata-ai/vale-action@reviewdog
+      with:
+        files: '*.md'
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
