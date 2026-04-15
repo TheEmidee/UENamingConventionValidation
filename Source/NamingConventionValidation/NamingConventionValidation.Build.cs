@@ -18,7 +18,8 @@ namespace UnrealBuildTool.Rules
                     "AssetRegistry",
                     "EditorSubsystem",
                     "DeveloperSettings",
-                    "MessageLog"
+                    "MessageLog",
+                    "DataValidation"
                 }
             );
 
