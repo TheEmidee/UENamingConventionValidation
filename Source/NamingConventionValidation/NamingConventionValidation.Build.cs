@@ -27,6 +27,7 @@ namespace UnrealBuildTool.Rules
                 new string[] {
                     "Slate",
                     "SlateCore",
+                    "InputCore",
                     "UnrealEd",
                     "AssetRegistry",
                     "EditorStyle",
