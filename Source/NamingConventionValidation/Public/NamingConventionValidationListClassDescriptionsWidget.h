@@ -20,6 +20,8 @@ private:
 	/** Handler for when a column is clicked to change the sort mode */
 	void OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode);
 
+	void SortClassDescriptions();
+
 	/** The state of the column header checkbox that toggles the check state of all items */
 	ECheckBoxState GetToggleSelectedState() const;
 
@@ -42,6 +44,7 @@ private:
 	FReply OnAddNewDescription();
 
 	void PopulateClassDescriptions();
+
 
 	FName SortByColumn;
 	EColumnSortMode::Type SortMode;

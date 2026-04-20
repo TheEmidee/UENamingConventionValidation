@@ -273,6 +273,60 @@ EColumnSortMode::Type SNamingConventionValidationListClassDescriptionsWidget::Ge
 
 void SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode)
 {
+	SortByColumn = ColumnId;
+	SortMode = InSortMode;
+
+	SortClassDescriptions();
+}
+
+void SNamingConventionValidationListClassDescriptionsWidget::SortClassDescriptions()
+{
+	if (SortByColumn == SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_ClassPath)
+	{
+		if (SortMode == EColumnSortMode::Ascending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.ClassPath.ToString().Compare(B->ClassDescription.ClassPath.ToString()) < 0; });
+		}
+		else if (SortMode == EColumnSortMode::Descending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.ClassPath.ToString().Compare(B->ClassDescription.ClassPath.ToString()) >= 0; });
+		}
+	}
+	else if (SortByColumn == SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Prefix)
+	{
+		if (SortMode == EColumnSortMode::Ascending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Prefix.Compare(B->ClassDescription.Prefix) < 0; });
+		}
+		else if (SortMode == EColumnSortMode::Descending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Prefix.Compare(B->ClassDescription.Prefix) >= 0; });
+		}
+	}
+	else if (SortByColumn == SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Suffix)
+	{
+		if (SortMode == EColumnSortMode::Ascending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Suffix.Compare(B->ClassDescription.Suffix) < 0; });
+		}
+		else if (SortMode == EColumnSortMode::Descending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Suffix.Compare(B->ClassDescription.Suffix) >= 0; });
+		}
+	}
+	else if (SortByColumn == SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Priority)
+	{
+		if (SortMode == EColumnSortMode::Ascending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Priority >= B->ClassDescription.Priority; });
+		}
+		else if (SortMode == EColumnSortMode::Descending)
+		{
+			ClassDescriptionsItems.Sort([](const TSharedPtr<FClassDescriptionItem>& A, const TSharedPtr<FClassDescriptionItem>& B) { return A->ClassDescription.Priority <= B->ClassDescription.Priority; });
+		}
+	}
+
+	ClassDescriptionsListView->RequestListRefresh();
 }
 
 ECheckBoxState SNamingConventionValidationListClassDescriptionsWidget::GetToggleSelectedState() const
@@ -475,6 +529,13 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddNewDescripti
 				Settings->ClassDescriptions.Sort();
 				Settings->TryUpdateDefaultConfigFile();
 				PopulateClassDescriptions();
+			}
+			else
+			{
+				FMessageDialog::Open(
+				    EAppMsgType::Ok,
+				    FText::Format(LOCTEXT("ClassDescriptionsAdd_Error", "A class description for {0} already exists!."), FText::FromString(ClassDescription.ClassPath.ToString())),
+				    LOCTEXT("ClassDescriptionsRemoved_Title", "Add class description error"));
 			}
 		}
 	});
