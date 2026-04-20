@@ -20,7 +20,11 @@ struct FNamingConventionValidationClassDescription
 
 	bool operator<(const FNamingConventionValidationClassDescription& other) const
 	{
-		return Priority > other.Priority || ClassPath.ToString() < other.ClassPath.ToString();
+		if (Priority == other.Priority)
+		{
+			return ClassPath.ToString() < other.ClassPath.ToString();
+		}
+		return Priority > other.Priority;
 	}
 
 	FString ToString() const;
@@ -34,6 +38,7 @@ struct FNamingConventionValidationClassDescription
 	UPROPERTY(config, EditAnywhere)
 	FString Suffix;
 
+	// Priorities with a higher value are selected first
 	UPROPERTY(config, EditAnywhere)
 	int Priority;
 };

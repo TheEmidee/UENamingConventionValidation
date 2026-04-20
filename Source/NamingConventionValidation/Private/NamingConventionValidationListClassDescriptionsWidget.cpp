@@ -314,6 +314,7 @@ TSharedRef<ITableRow> SNamingConventionValidationListClassDescriptionsWidget::Ma
 	    .OnClassDescriptionChanged_Lambda([this]() {
 		    if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
 		    {
+			    Settings->ClassDescriptions.Sort();
 			    Settings->TryUpdateDefaultConfigFile();
 			    PopulateClassDescriptions();
 		    }
@@ -343,9 +344,10 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnRemovePressed()
 		}
 		const int NewCount = Settings->ClassDescriptions.Num();
 
-		PopulateClassDescriptions();
-
+		Settings->ClassDescriptions.Sort();
 		Settings->TryUpdateDefaultConfigFile();
+
+		PopulateClassDescriptions();
 
 		FMessageDialog::Open(
 		    EAppMsgType::Ok,
@@ -364,7 +366,95 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPres
 		if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
 		{
 			Settings->ClassDescriptions.Reset();
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Chooser.ChooserTable")), TEXT("CHT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/PoseSearch.PoseSearchDatabase")), TEXT("PSD_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/PoseSearch.PoseSearchSchema")), TEXT("PSS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/PoseSearch.PoseSearchNormalizationSet")), TEXT("PSNS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.BTDecorator")), TEXT("BTD_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.BTService")), TEXT("BTS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.BTTaskNode")), TEXT("BTT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonUI.CommonBorderStyle")), TEXT("CS_"), TEXT("_BORDER"), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialFunctionMaterialLayerBlend")), TEXT("MLB_"), TEXT(""), 150);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Blueprint")), TEXT("BP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AimOffsetBlendSpace")), TEXT("AO2D_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonUI.CommonButtonStyle")), TEXT("CS_"), TEXT("_BTN"), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonInput.CommonInputBaseControllerData")), TEXT("CICD_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonUI.CommonTextScrollStyle")), TEXT("CTSS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialFunctionMaterialLayerInstance")), TEXT("MLI_"), TEXT(""), 110);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CanvasRenderTarget2D")), TEXT("RT_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AimOffsetBlendSpace1D")), TEXT("AO1D_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.BlackboardData")), TEXT("BBD_"), TEXT(""), 100);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AnimInstance")), TEXT("ABP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AnimLayerInterface")), TEXT("ALI_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AnimMontage")), TEXT("AM_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialFunctionMaterialLayer")), TEXT("ML_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AnimSequence")), TEXT("A_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.BehaviorTree")), TEXT("BT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.BlendSpace")), TEXT("BS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonUI.CommonTextStyle")), TEXT("CTS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Blutility.EditorUtilityWidgetBlueprint")), TEXT("EUW_"), TEXT(""), 10);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/ContextualAnimation.ContextualAnimSceneAsset")), TEXT("CTXAS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveFloat")), TEXT("CF_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveLinearColor")), TEXT("CC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveLinearColorAtlas")), TEXT("CA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveTable")), TEXT("CT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/GameFeatures.GameFeatureData")), TEXT("GFD_"), TEXT(""), 200);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveVector")), TEXT("CV_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.DataAsset")), TEXT("DA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.DataLayerAsset")), TEXT("DL_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.DataTable")), TEXT("DT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Blutility.EditorUtilityBlueprint")), TEXT("BP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.EnvQuery")), TEXT("EQ_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Blutility.EditorUtilityWidget")), TEXT("EUW_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/AIModule.EnvQueryContext")), TEXT("EQC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.ForceFeedbackAttenuation")), TEXT("FFA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.ForceFeedbackEffect")), TEXT("FFE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/GameplayAbilities.GameplayAbility")), TEXT("GA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/GameplayAbilities.GameplayCueNotify_Actor")), TEXT("GC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/GameplayAbilities.GameplayCueNotify_Static")), TEXT("GC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/GameplayAbilities.GameplayEffect")), TEXT("GE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.PrimaryDataAsset")), TEXT("PDA_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.HapticFeedbackEffect_Curve")), TEXT("HFEC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CoreUObject.Interface")), TEXT("BPI_"), TEXT(""), 100);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/EnhancedInput.InputAction")), TEXT("IA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/EnhancedInput.InputMappingContext")), TEXT("IMC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.LevelScriptActor")), TEXT("L_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/LevelSequence.LevelSequence")), TEXT("LS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Material")), TEXT("M_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialFunctionInterface")), TEXT("MF_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialInstance")), TEXT("MI_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.MaterialParameterCollection")), TEXT("MPC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/ModelViewViewModel.MVVMViewModelBase")), TEXT("VM_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Niagara.NiagaraEffectType")), TEXT("NET_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Niagara.NiagaraEmitter")), TEXT("NE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Niagara.NiagaraScript")), TEXT("NSC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Niagara.NiagaraSystem")), TEXT("NS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.ParticleSystem")), TEXT("PS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/PCG.PCGBlueprintElement")), TEXT("PCGBPE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.PhysicsAsset")), TEXT("PA_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Blutility.PlacedEditorUtilityBase")), TEXT("BPT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/EnhancedInput.PlayerMappableInputConfig")), TEXT("PMIC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SkeletalMesh")), TEXT("SK_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Skeleton")), TEXT("SKEL_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/SmartObjectsModule.SmartObjectDefinition")), TEXT("SO_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundClass")), TEXT("SCL_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundCue")), TEXT("SC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundMix")), TEXT("SMix_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundWave")), TEXT("SW_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/StateTreeModule.StateTree")), TEXT("ST_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/StateTreeModule.StateTreeConditionBlueprintBase")), TEXT("STC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/StateTreeModule.StateTreeEvaluatorBlueprintBase")), TEXT("STE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/StateTreeModule.StateTreeTaskBlueprintBase")), TEXT("STT_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.StaticMesh")), TEXT("SM_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Texture")), TEXT("T_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Texture2D")), TEXT("T_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.UserDefinedEnum")), TEXT("BPE_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.UserDefinedStruct")), TEXT("BPS_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/UMG.UserWidget")), TEXT("WBP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.World")), TEXT("L_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Soundscape.SoundScapeColor")), TEXT("SSC_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Soundscape.SoundScapePalette")), TEXT("SSP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Sort();
 			Settings->TryUpdateDefaultConfigFile();
 		}
 		PopulateClassDescriptions();
@@ -382,6 +472,7 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddNewDescripti
 			    }) == nullptr)
 			{
 				Settings->ClassDescriptions.Emplace(ClassDescription);
+				Settings->ClassDescriptions.Sort();
 				Settings->TryUpdateDefaultConfigFile();
 				PopulateClassDescriptions();
 			}
