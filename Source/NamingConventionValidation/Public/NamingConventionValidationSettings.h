@@ -51,8 +51,6 @@ class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final :
 public:
 	UNamingConventionValidationSettings();
 
-	bool IsPathExcludedFromValidation(const FString& Path) const;
-
 #if WITH_EDITOR
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

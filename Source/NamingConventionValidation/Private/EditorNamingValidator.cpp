@@ -5,7 +5,7 @@
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidation"
 
-namespace Private {
+namespace {
 bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
 {
 	static const FName
@@ -30,68 +30,47 @@ bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
 
 	return true;
 }
-}
 
-bool UEditorNamingValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
-{
-	return true;
-}
-
-EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
+bool IsPathExcludedFromValidation(const FString& Path)
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
-	if (Settings->IsPathExcludedFromValidation(InAssetData.PackageName.ToString()))
+
+	if (!Path.StartsWith("/Game/") && Settings->bAllowValidationOnlyInGameFolder)
 	{
-		return EDataValidationResult::Valid;
-	}
+		auto can_process_folder = Settings->NonGameFoldersDirectoriesToProcess.FindByPredicate([&Path](const auto& directory) {
+			return Path.StartsWith(directory.Path);
+		}) != nullptr;
 
-	FName AssetClass;
-	if (!Private::TryGetAssetDataRealClass(AssetClass, InAssetData))
-	{
-		return EDataValidationResult::Invalid;
-	}
-
-	static const FTopLevelAssetPath BlueprintGeneratedClassName(FName(TEXT("/")), FName(TEXT("BlueprintGeneratedClass")));
-
-	auto AssetName = InAssetData.AssetName.ToString();
-
-	// Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
-	if (InAssetData.AssetClassPath == BlueprintGeneratedClassName)
-	{
-		AssetName.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
-	}
-
-	const FSoftClassPath AssetClassPath(AssetClass.ToString());
-
-	if (const auto* AssetRealClass = AssetClassPath.TryLoadClass<UObject>())
-	{
-		if (IsClassExcluded(Context, AssetRealClass))
+		if (!can_process_folder)
 		{
-			return EDataValidationResult::Invalid;
+			can_process_folder = Settings->NonGameFoldersDirectoriesToProcessContainingToken.FindByPredicate([&Path](const auto& token) {
+				return Path.Contains(token);
+			}) != nullptr;
 		}
 
-		const auto Result = DoesAssetMatchesClassDescriptions(Context, AssetRealClass, AssetName);
-		if (Result == EDataValidationResult::Invalid)
+		if (!can_process_folder)
 		{
-			return Result;
+			return true;
 		}
 	}
 
-	static const FTopLevelAssetPath BlueprintClassName(FName(TEXT("/Script/Engine")), FName(TEXT("Blueprint")));
-
-	if (InAssetData.AssetClassPath == BlueprintClassName || InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	if (Path.StartsWith("/Game/Developers/") && !Settings->bAllowValidationInDevelopersFolder)
 	{
-		if (!AssetName.StartsWith(Settings->BlueprintsPrefix))
+		return true;
+	}
+
+	for (const auto& excluded_path : Settings->ExcludedDirectories)
+	{
+		if (Path.StartsWith(excluded_path.Path))
 		{
-			Context.AddError(FText::FromString(TEXT("Generic blueprint assets must start with BP_")));
-			return EDataValidationResult::Invalid;
+			return true;
 		}
 	}
 
-	return EDataValidationResult::Valid;
+	return false;
 }
 
-bool UEditorNamingValidator::IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass) const
+bool IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass)
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
 
@@ -112,7 +91,7 @@ bool UEditorNamingValidator::IsClassExcluded(FDataValidationContext& Context, co
 	return false;
 }
 
-EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName) const
+EDataValidationResult DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName)
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
 	const UClass* MostPreciseClass = UObject::StaticClass();
@@ -166,6 +145,66 @@ EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(
 	}
 
 	return Result;
+}
+}
+
+bool UEditorNamingValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
+{
+	return true;
+}
+
+EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+	if (IsPathExcludedFromValidation(InAssetData.PackageName.ToString()))
+	{
+		return EDataValidationResult::Valid;
+	}
+
+	FName AssetClass;
+	if (!TryGetAssetDataRealClass(AssetClass, InAssetData))
+	{
+		return EDataValidationResult::Invalid;
+	}
+
+	static const FTopLevelAssetPath BlueprintGeneratedClassName(FName(TEXT("/")), FName(TEXT("BlueprintGeneratedClass")));
+
+	auto AssetName = InAssetData.AssetName.ToString();
+
+	// Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
+	if (InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	{
+		AssetName.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
+	}
+
+	const FSoftClassPath AssetClassPath(AssetClass.ToString());
+
+	if (const auto* AssetRealClass = AssetClassPath.TryLoadClass<UObject>())
+	{
+		if (IsClassExcluded(Context, AssetRealClass))
+		{
+			return EDataValidationResult::Invalid;
+		}
+
+		const auto Result = DoesAssetMatchesClassDescriptions(Context, AssetRealClass, AssetName);
+		if (Result == EDataValidationResult::Invalid)
+		{
+			return Result;
+		}
+	}
+
+	static const FTopLevelAssetPath BlueprintClassName(FName(TEXT("/Script/Engine")), FName(TEXT("Blueprint")));
+
+	if (InAssetData.AssetClassPath == BlueprintClassName || InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	{
+		if (!AssetName.StartsWith(Settings->BlueprintsPrefix))
+		{
+			Context.AddError(FText::FromString(TEXT("Generic blueprint assets must start with BP_")));
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	return EDataValidationResult::Valid;
 }
 
 #undef LOCTEXT_NAMESPACE
