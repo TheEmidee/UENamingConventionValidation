@@ -51,7 +51,11 @@ class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final :
 public:
 	UNamingConventionValidationSettings();
 
-	bool IsPathExcludedFromValidation(const FString& path) const;
+	bool IsPathExcludedFromValidation(const FString& Path) const;
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 	UPROPERTY(config, EditAnywhere, meta = (LongPackageName, ConfigRestartRequired = true))
 	TArray<FDirectoryPath> ExcludedDirectories;
