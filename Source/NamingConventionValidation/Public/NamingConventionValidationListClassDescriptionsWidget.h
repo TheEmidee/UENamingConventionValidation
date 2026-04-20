@@ -45,7 +45,6 @@ private:
 
 	void PopulateClassDescriptions();
 
-
 	FName SortByColumn;
 	EColumnSortMode::Type SortMode;
 
