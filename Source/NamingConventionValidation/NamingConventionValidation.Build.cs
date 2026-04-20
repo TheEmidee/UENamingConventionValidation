@@ -31,7 +31,8 @@ namespace UnrealBuildTool.Rules
                     "UnrealEd",
                     "AssetRegistry",
                     "EditorStyle",
-                    "Blutility"
+                    "Blutility",
+                    "PropertyEditor"
                 }
             );
         }

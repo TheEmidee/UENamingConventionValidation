@@ -1,5 +1,6 @@
-#include "NamingConventionValidationClassDescriptionWidget.h"
+#include "NamingConventionValidationListClassDescriptionsWidget.h"
 
+#include "NamingConventionValidationAddClassDescriptionWidget.h"
 #include "NamingConventionValidationSettings.h"
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidationClassDescriptionWidget"
@@ -10,6 +11,29 @@ const FName ColumnID_ClassPath("ClassPath");
 const FName ColumnID_Prefix("Prefix");
 const FName ColumnID_Suffix("Suffix");
 const FName ColumnID_Priority("Priority");
+const FName ColumnID_Edit("Edit");
+}
+
+namespace {
+void ShowAddDescriptionWidget(const FNamingConventionValidationClassDescription& ClassDescription, TFunction<void(const FNamingConventionValidationClassDescription&)> OnClassDescriptionAdded)
+{
+	const TSharedRef<SWindow> Window = SNew(SWindow)
+	                                       .Title(LOCTEXT("AddBewDescription", "Add n  ew class description"))
+	                                       .SizingRule(ESizingRule::Autosized)
+	                                       .SupportsMaximize(false)
+	                                       .SupportsMinimize(false);
+
+	Window->SetContent(SNew(SBox)
+	        .MinDesiredWidth(320.0f)
+	            [SNew(SNamingConventionValidationAddClassDescriptionWidget)
+	                    .ClassDescription(ClassDescription)
+	                    .OwningWindow(Window)
+	                    .OnClassDescriptionValidated_Lambda([OnClassDescriptionAdded](const FNamingConventionValidationClassDescription& ClassDescription) {
+		                    OnClassDescriptionAdded(ClassDescription);
+	                    })]);
+
+	GEditor->EditorAddModalWindow(Window);
+}
 }
 
 /**
@@ -32,13 +56,12 @@ class SClassDescriptionListRow : public SMultiColumnTableRow<TSharedPtr<FClassDe
 {
 
 public:
+	DECLARE_DELEGATE(FOnClassDescriptionChanged)
+
 	SLATE_BEGIN_ARGS(SClassDescriptionListRow) {}
-
-	/** The list item for this row */
 	SLATE_ARGUMENT(TSharedPtr<FClassDescriptionItem>, Item)
-
-	/** The list item for this row */
 	SLATE_ARGUMENT(TSharedPtr<SListView<TSharedPtr<FClassDescriptionItem>>>, List)
+	SLATE_EVENT(FOnClassDescriptionChanged, OnClassDescriptionChanged)
 
 	SLATE_END_ARGS()
 
@@ -49,6 +72,7 @@ public:
 		check(Item.IsValid());
 
 		List = InArgs._List;
+		OnClassDescriptionChanged = InArgs._OnClassDescriptionChanged;
 
 		SMultiColumnTableRow<TSharedPtr<FClassDescriptionItem>>::Construct(FSuperRowType::FArguments(), InOwnerTableView);
 	}
@@ -102,6 +126,30 @@ public:
 			            [SNew(STextBlock)
 			                    .Text(FText::FromString(FString::FromInt(Item->ClassDescription.Priority)))];
 		}
+		else if (ColumnName == SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Edit)
+		{
+			ItemContentWidget = SNew(SHorizontalBox) +
+			    SHorizontalBox::Slot()
+			        .Padding(RowPadding)
+			            [SNew(SButton)
+			                    .Text(LOCTEXT("NamingConventionValidationEditDescription", "Edit"))
+			                    .HAlign(HAlign_Center)
+			                    .OnClicked_Lambda([this]() {
+				                    ShowAddDescriptionWidget(Item->ClassDescription, [this](const FNamingConventionValidationClassDescription& ClassDescription) {
+					                    if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
+					                    {
+						                    if (auto* ExistingClassDescription = Settings->ClassDescriptions.FindByPredicate([ClassDescription](const FNamingConventionValidationClassDescription& ExistingClassDescription) {
+							                        return ExistingClassDescription.ClassPath == ClassDescription.ClassPath;
+						                        }))
+						                    {
+							                    *ExistingClassDescription = ClassDescription;
+							                    OnClassDescriptionChanged.ExecuteIfBound();
+						                    }
+					                    }
+				                    });
+				                    return FReply::Handled();
+			                    })];
+		}
 
 		return ItemContentWidget.ToSharedRef();
 	}
@@ -132,9 +180,10 @@ public:
 private:
 	TSharedPtr<FClassDescriptionItem> Item;
 	TWeakPtr<SListView<TSharedPtr<FClassDescriptionItem>>> List;
+	FOnClassDescriptionChanged OnClassDescriptionChanged;
 };
 
-void SNamingConventionValidationClassDescriptionWidget::Construct(const FArguments& InArgs)
+void SNamingConventionValidationListClassDescriptionsWidget::Construct(const FArguments& InArgs)
 {
 	TSharedRef<SHeaderRow> HeaderRowWidget = SNew(SHeaderRow);
 
@@ -144,37 +193,42 @@ void SNamingConventionValidationClassDescriptionWidget::Construct(const FArgumen
 	                .Padding(FMargin(6, 3, 6, 3))
 	                .HAlign(HAlign_Center)
 	                    [SNew(SCheckBox)
-	                            .IsChecked(this, &SNamingConventionValidationClassDescriptionWidget::GetToggleSelectedState)
-	                            .OnCheckStateChanged(this, &SNamingConventionValidationClassDescriptionWidget::OnToggleSelectedCheckBox)]]
+	                            .IsChecked(this, &SNamingConventionValidationListClassDescriptionsWidget::GetToggleSelectedState)
+	                            .OnCheckStateChanged(this, &SNamingConventionValidationListClassDescriptionsWidget::OnToggleSelectedCheckBox)]]
 	            .FixedWidth(38.0f));
 
 	HeaderRowWidget->AddColumn(
 	    SHeaderRow::Column(SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_ClassPath)
 	        .DefaultLabel(LOCTEXT("NamingConventionValidationColumnLabel", "ClassPath"))
-	        .SortMode(this, &SNamingConventionValidationClassDescriptionWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_ClassPath)
-	        .OnSort(this, &SNamingConventionValidationClassDescriptionWidget::OnColumnSortModeChanged)
-	        .FillWidth(5.0f));
+	        .SortMode(this, &SNamingConventionValidationListClassDescriptionsWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_ClassPath)
+	        .OnSort(this, &SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged)
+	        .FillWidth(1.0f));
 
 	HeaderRowWidget->AddColumn(
 	    SHeaderRow::Column(SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Prefix)
 	        .DefaultLabel(LOCTEXT("NamingConventionValidationColumnLabel", "Prefix"))
-	        .SortMode(this, &SNamingConventionValidationClassDescriptionWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Prefix)
-	        .OnSort(this, &SNamingConventionValidationClassDescriptionWidget::OnColumnSortModeChanged)
-	        .FillWidth(5.0f));
+	        .SortMode(this, &SNamingConventionValidationListClassDescriptionsWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Prefix)
+	        .OnSort(this, &SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged)
+	        .FixedWidth(80.0f));
 
 	HeaderRowWidget->AddColumn(
 	    SHeaderRow::Column(SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Suffix)
 	        .DefaultLabel(LOCTEXT("NamingConventionValidationColumnLabel", "Suffix"))
-	        .SortMode(this, &SNamingConventionValidationClassDescriptionWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Suffix)
-	        .OnSort(this, &SNamingConventionValidationClassDescriptionWidget::OnColumnSortModeChanged)
-	        .FillWidth(5.0f));
+	        .SortMode(this, &SNamingConventionValidationListClassDescriptionsWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Suffix)
+	        .OnSort(this, &SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged)
+	        .FixedWidth(80.0f));
 
 	HeaderRowWidget->AddColumn(
 	    SHeaderRow::Column(SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Priority)
 	        .DefaultLabel(LOCTEXT("NamingConventionValidationColumnLabel", "Priority"))
-	        .SortMode(this, &SNamingConventionValidationClassDescriptionWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Priority)
-	        .OnSort(this, &SNamingConventionValidationClassDescriptionWidget::OnColumnSortModeChanged)
-	        .FillWidth(5.0f));
+	        .SortMode(this, &SNamingConventionValidationListClassDescriptionsWidget::GetColumnSortMode, SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Priority)
+	        .OnSort(this, &SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged)
+	        .FixedWidth(80.0f));
+
+	HeaderRowWidget->AddColumn(
+	    SHeaderRow::Column(SNamingConventionValidationClassDescriptionWidgetDefs::ColumnID_Edit)
+	        .DefaultLabel(LOCTEXT("NamingConventionValidationColumnLabel", "Edit"))
+	        .FixedWidth(80.0f));
 
 	ChildSlot
 	    [SNew(SOverlay) +
@@ -182,7 +236,7 @@ void SNamingConventionValidationClassDescriptionWidget::Construct(const FArgumen
 	            SVerticalBox::Slot()
 	                [SAssignNew(ClassDescriptionsListView, SListView<TSharedPtr<FClassDescriptionItem>>)
 	                        .ListItemsSource(&ClassDescriptionsItems)
-	                        .OnGenerateRow(this, &SNamingConventionValidationClassDescriptionWidget::MakeUnusedTagListItemWidget)
+	                        .OnGenerateRow(this, &SNamingConventionValidationListClassDescriptionsWidget::MakeClassDescriptionListItemWidget)
 	                        .HeaderRow(HeaderRowWidget)
 	                        .SelectionMode(ESelectionMode::Multi)] +
 	            SVerticalBox::Slot().Padding(15).AutoHeight().HAlign(HAlign_Right)
@@ -191,18 +245,23 @@ void SNamingConventionValidationClassDescriptionWidget::Construct(const FArgumen
 	                        .AutoWidth()
 	                            [SNew(SButton)
 	                                    .Text(LOCTEXT("AddDefaultsButton", "Add Defaults"))
-	                                    .OnClicked(this, &SNamingConventionValidationClassDescriptionWidget::OnAddDefaultsPressed)] +
+	                                    .OnClicked(this, &SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPressed)] +
+	                    SHorizontalBox::Slot()
+	                        .AutoWidth()
+	                            [SNew(SButton)
+	                                    .Text(LOCTEXT("AddNewButton", "Add New"))
+	                                    .OnClicked(this, &SNamingConventionValidationListClassDescriptionsWidget::OnAddNewDescription)] +
 	                    SHorizontalBox::Slot()
 	                        .AutoWidth()
 	                            [SNew(SButton)
 	                                    .Text(LOCTEXT("RemoveButton", "Remove Selected Classes"))
-	                                    .OnClicked(this, &SNamingConventionValidationClassDescriptionWidget::OnRemovePressed)
-	                                    .IsEnabled(this, &SNamingConventionValidationClassDescriptionWidget::IsRemoveEnabled)]]]];
+	                                    .OnClicked(this, &SNamingConventionValidationListClassDescriptionsWidget::OnRemovePressed)
+	                                    .IsEnabled(this, &SNamingConventionValidationListClassDescriptionsWidget::IsRemoveEnabled)]]]];
 
 	PopulateClassDescriptions();
 }
 
-EColumnSortMode::Type SNamingConventionValidationClassDescriptionWidget::GetColumnSortMode(const FName ColumnId) const
+EColumnSortMode::Type SNamingConventionValidationListClassDescriptionsWidget::GetColumnSortMode(const FName ColumnId) const
 {
 	if (SortByColumn != ColumnId)
 	{
@@ -212,11 +271,11 @@ EColumnSortMode::Type SNamingConventionValidationClassDescriptionWidget::GetColu
 	return SortMode;
 }
 
-void SNamingConventionValidationClassDescriptionWidget::OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode)
+void SNamingConventionValidationListClassDescriptionsWidget::OnColumnSortModeChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type InSortMode)
 {
 }
 
-ECheckBoxState SNamingConventionValidationClassDescriptionWidget::GetToggleSelectedState() const
+ECheckBoxState SNamingConventionValidationListClassDescriptionsWidget::GetToggleSelectedState() const
 {
 	if (ClassDescriptionsItems.Num() == 0)
 	{
@@ -237,7 +296,7 @@ ECheckBoxState SNamingConventionValidationClassDescriptionWidget::GetToggleSelec
 	return CommonCheckState;
 }
 
-void SNamingConventionValidationClassDescriptionWidget::OnToggleSelectedCheckBox(ECheckBoxState InNewState)
+void SNamingConventionValidationListClassDescriptionsWidget::OnToggleSelectedCheckBox(ECheckBoxState InNewState)
 {
 	for (const auto& Item : ClassDescriptionsItems)
 	{
@@ -247,21 +306,28 @@ void SNamingConventionValidationClassDescriptionWidget::OnToggleSelectedCheckBox
 	ClassDescriptionsListView->RequestListRefresh();
 }
 
-TSharedRef<ITableRow> SNamingConventionValidationClassDescriptionWidget::MakeUnusedTagListItemWidget(TSharedPtr<FClassDescriptionItem> Item, const TSharedRef<STableViewBase>& OwnerTable)
+TSharedRef<ITableRow> SNamingConventionValidationListClassDescriptionsWidget::MakeClassDescriptionListItemWidget(TSharedPtr<FClassDescriptionItem> Item, const TSharedRef<STableViewBase>& OwnerTable)
 {
 	return SNew(SClassDescriptionListRow, OwnerTable)
 	    .Item(Item)
-	    .List(ClassDescriptionsListView);
+	    .List(ClassDescriptionsListView)
+	    .OnClassDescriptionChanged_Lambda([this]() {
+		    if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
+		    {
+			    Settings->TryUpdateDefaultConfigFile();
+			    PopulateClassDescriptions();
+		    }
+	    });
 }
 
-bool SNamingConventionValidationClassDescriptionWidget::IsRemoveEnabled() const
+bool SNamingConventionValidationListClassDescriptionsWidget::IsRemoveEnabled() const
 {
 	return ClassDescriptionsItems.FindByPredicate([](const auto& Item) {
 		return Item->CheckState == ECheckBoxState::Checked;
 	}) != nullptr;
 }
 
-FReply SNamingConventionValidationClassDescriptionWidget::OnRemovePressed()
+FReply SNamingConventionValidationListClassDescriptionsWidget::OnRemovePressed()
 {
 	if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
 	{
@@ -279,31 +345,52 @@ FReply SNamingConventionValidationClassDescriptionWidget::OnRemovePressed()
 
 		PopulateClassDescriptions();
 
+		Settings->TryUpdateDefaultConfigFile();
+
 		FMessageDialog::Open(
 		    EAppMsgType::Ok,
 		    FText::Format(LOCTEXT("ClassDescriptionsRemoved_Text", "{0} class descriptions were removed in total."),
-		        FText::AsNumber(NewCount - PreviousCount)),
+		        FText::AsNumber(PreviousCount - NewCount)),
 		    LOCTEXT("ClassDescriptionsRemoved_Title", "Class Descriptions Removal Complete"));
 	}
 
 	return FReply::Handled();
 }
 
-FReply SNamingConventionValidationClassDescriptionWidget::OnAddDefaultsPressed()
+FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPressed()
 {
 	if (FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("AddDefaults", "Do you want to replace all the class descriptions with default ones?"), LOCTEXT("AddDefaults", "Confirmation")) == EAppReturnType::Yes)
 	{
 		if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
 		{
 			Settings->ClassDescriptions.Reset();
-			Settings->ClassDescriptions.Emplace(FSoftObjectPath(TEXT("/Script/Engine.AnimInstance")), TEXT("ABP_"), TEXT(""), 0);
+			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.AnimInstance")), TEXT("ABP_"), TEXT(""), 0);
+			Settings->TryUpdateDefaultConfigFile();
 		}
 		PopulateClassDescriptions();
 	}
 	return FReply::Handled();
 }
 
-void SNamingConventionValidationClassDescriptionWidget::PopulateClassDescriptions()
+FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddNewDescription()
+{
+	ShowAddDescriptionWidget({}, [this](const FNamingConventionValidationClassDescription& ClassDescription) {
+		if (auto* Settings = GetMutableDefault<UNamingConventionValidationSettings>())
+		{
+			if (Settings->ClassDescriptions.FindByPredicate([ClassDescription](const FNamingConventionValidationClassDescription& ExistingClassDescription) {
+				    return ExistingClassDescription.ClassPath == ClassDescription.ClassPath;
+			    }) == nullptr)
+			{
+				Settings->ClassDescriptions.Emplace(ClassDescription);
+				Settings->TryUpdateDefaultConfigFile();
+				PopulateClassDescriptions();
+			}
+		}
+	});
+	return FReply::Handled();
+}
+
+void SNamingConventionValidationListClassDescriptionsWidget::PopulateClassDescriptions()
 {
 	if (auto* Settings = GetDefault<UNamingConventionValidationSettings>())
 	{

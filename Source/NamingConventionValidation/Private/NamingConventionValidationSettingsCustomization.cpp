@@ -3,7 +3,7 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "NamingConventionValidationClassDescriptionWidget.h"
+#include "NamingConventionValidationListClassDescriptionsWidget.h"
 #include "NamingConventionValidationSettings.h"
 
 #define LOCTEXT_NAMESPACE "FGameplayTagsSettingsCustomization"
@@ -46,14 +46,14 @@ void FNamingConventionValidationSettingsCustomization::CustomizeDetails(IDetailL
 				                const TSharedRef<SWindow> Window = SNew(SWindow)
 				                                                       .Title(LOCTEXT("ManageNamingConvention", "Manage Naming Convention"))
 				                                                       .SizingRule(ESizingRule::UserSized)
-				                                                       .MinWidth(300.0f)
+				                                                       .MinWidth(600.0f)
 				                                                       .MinHeight(300.0f)
 				                                                       .SupportsMaximize(false)
 				                                                       .SupportsMinimize(false)
 				                                                       .Content()
 				                                                           [SNew(SBox)
 				                                                                   .MinDesiredWidth(320.0f)
-				                                                                       [SNew(SNamingConventionValidationClassDescriptionWidget)]];
+				                                                                       [SNew(SNamingConventionValidationListClassDescriptionsWidget)]];
 
 				                GEditor->EditorAddModalWindow(Window);
 				                return FReply::Handled();

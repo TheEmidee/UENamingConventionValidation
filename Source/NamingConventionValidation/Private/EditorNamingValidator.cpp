@@ -95,12 +95,17 @@ bool UEditorNamingValidator::IsClassExcluded(FDataValidationContext& Context, co
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
 
-	for (const auto* ExcludedClass : Settings->ExcludedClasses)
+	for (const auto& ExcludedClass : Settings->ExcludedClassPaths)
 	{
-		if (AssetClass->IsChildOf(ExcludedClass))
+		TSoftClassPtr<UObject> SoftClassPtr(ExcludedClass);
+
+		if (auto* Class = SoftClassPtr.LoadSynchronous())
 		{
-			Context.AddError(FText::Format(LOCTEXT("ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation"), FText::FromString(ExcludedClass->GetDefaultObjectName().ToString())));
-			return true;
+			if (AssetClass->IsChildOf(Class))
+			{
+				Context.AddError(FText::Format(LOCTEXT("ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation"), FText::FromString(ExcludedClass.ToString())));
+				return true;
+			}
 		}
 	}
 
@@ -115,7 +120,9 @@ EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(
 
 	for (const auto& ClassDescription : Settings->ClassDescriptions)
 	{
-		if (ClassDescription.Class == nullptr)
+		TSoftClassPtr<UObject> SoftClassPtr(ClassDescription.ClassPath);
+		UClass* Class = SoftClassPtr.LoadSynchronous();
+		if (Class == nullptr)
 		{
 			FMessageLog DataValidationLog("NamingConventionValidation");
 			DataValidationLog
@@ -124,17 +131,17 @@ EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(
 			continue;
 		}
 
-		const bool bClassFilterMatches = AssetClass->IsChildOf(ClassDescription.Class);
-		const bool bClassIsMorePreciseOrTheSame = ClassDescription.Class->IsChildOf(MostPreciseClass);
-		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && ClassDescription.Class == MostPreciseClass;
-		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && ClassDescription.Class != MostPreciseClass;
+		const bool bClassFilterMatches = AssetClass->IsChildOf(Class);
+		const bool bClassIsMorePreciseOrTheSame = Class->IsChildOf(MostPreciseClass);
+		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && Class == MostPreciseClass;
+		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && Class != MostPreciseClass;
 		// had an error on this precision level before. but there could be another filter that passes
 		const bool bSamePrecisionCanBeValid = bClassIsSame && Result != EDataValidationResult::Valid;
 
 		const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
 		if (bCheckAffixes)
 		{
-			MostPreciseClass = ClassDescription.Class;
+			MostPreciseClass = Class;
 
 			Result = EDataValidationResult::Valid;
 

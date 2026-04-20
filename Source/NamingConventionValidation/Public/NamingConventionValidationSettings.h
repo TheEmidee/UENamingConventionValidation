@@ -12,24 +12,21 @@ struct FNamingConventionValidationClassDescription
 	GENERATED_USTRUCT_BODY()
 
 	FNamingConventionValidationClassDescription()
-	    : Class(nullptr), Priority(0)
+	    : Priority(0)
 	{}
 
-	FNamingConventionValidationClassDescription(const FSoftObjectPath& ClassPath, const FString& Prefix, const FString& Suffix, int Priority)
-	    : ClassPath(ClassPath), Class(nullptr), Prefix(Prefix), Suffix(Suffix), Priority(Priority) {}
+	FNamingConventionValidationClassDescription(const FSoftClassPath& ClassPath, const FString& Prefix, const FString& Suffix, int Priority)
+	    : ClassPath(ClassPath), Prefix(Prefix), Suffix(Suffix), Priority(Priority) {}
 
 	bool operator<(const FNamingConventionValidationClassDescription& other) const
 	{
-		return Priority > other.Priority || ((Class && other.Class) ? (Class->GetName() < other.Class->GetName()) : false);
+		return Priority > other.Priority || ClassPath.ToString() < other.ClassPath.ToString();
 	}
 
 	FString ToString() const;
 
 	UPROPERTY(config, EditAnywhere, meta = (AllowAbstract = true))
-	FSoftObjectPath ClassPath;
-
-	UPROPERTY(transient)
-	UClass* Class;
+	FSoftClassPath ClassPath;
 
 	UPROPERTY(config, EditAnywhere)
 	FString Prefix;
@@ -75,10 +72,7 @@ public:
 	uint8 bDoesValidateOnSave : 1;
 
 	UPROPERTY(config, EditAnywhere)
-	TArray<TSoftClassPtr<UObject>> ExcludedClassPaths;
-
-	UPROPERTY(transient)
-	TArray<UClass*> ExcludedClasses;
+	TArray<FSoftClassPath> ExcludedClassPaths;
 
 	UPROPERTY(config, EditAnywhere)
 	FString BlueprintsPrefix;
@@ -90,11 +84,5 @@ public:
 	// Dummy parameters used to hook the editor UI
 	UPROPERTY(EditAnywhere, AdvancedDisplay, transient, Category = "Naming Convention Validation")
 	FString OpenClassDescription;
-#endif
-
-	void PostProcessSettings();
-
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 };
