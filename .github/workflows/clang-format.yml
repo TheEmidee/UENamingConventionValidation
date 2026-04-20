@@ -1,13 +1,37 @@
-name: clang-format Check
-on: [push, pull_request]
+name: clang-format (changed files only)
+
+on:
+  pull_request:
+
 jobs:
-  formatting-check:
-    name: Formatting Check
+  clang-format:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.15.0
-      with:
-        clang-format-version: '20'
-        check-path: 'Source'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # IMPORTANT: we need full history to diff properly
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format-20
+
+      - name: Get list of changed C/C++ files
+        id: changed_files
+        run: |
+          files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(c|cc|cpp|cxx|h|hpp)$' || true)
+
+          echo "files=$(echo $files)" >> "$GITHUB_OUTPUT"
+
+      - name: Show changed files
+        run: echo "${{ steps.changed_files.outputs.files }}"
+
+      - name: Run clang-format on changed files
+        run: |
+          status=0
+          for f in ${{ steps.changed_files.outputs.files }}; do
+            echo "Checking $f"
+            clang-format-20 -style=file "$f" | diff -u "$f" - || status=1
+          done
+          exit $status
+

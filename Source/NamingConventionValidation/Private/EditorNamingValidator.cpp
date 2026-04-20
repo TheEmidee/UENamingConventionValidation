@@ -1,0 +1,164 @@
+#include "EditorNamingValidator.h"
+
+#include "Misc/DataValidation.h"
+#include "NamingConventionValidationSettings.h"
+
+#define LOCTEXT_NAMESPACE "NamingConventionValidation"
+
+namespace Private {
+bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
+{
+	static const FName
+	    NativeParentClassKey("NativeParentClass"),
+	    NativeClassKey("NativeClass");
+
+	if (!InAssetData.GetTagValue(NativeParentClassKey, asset_class))
+	{
+		if (!InAssetData.GetTagValue(NativeClassKey, asset_class))
+		{
+			if (const auto* asset = InAssetData.GetAsset())
+			{
+				const FSoftClassPath class_path(asset->GetClass());
+				asset_class = *class_path.ToString();
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+}
+
+bool UEditorNamingValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
+{
+	return true;
+}
+
+EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+	if (Settings->IsPathExcludedFromValidation(InAssetData.PackageName.ToString()))
+	{
+		return EDataValidationResult::Valid;
+	}
+
+	FName AssetClass;
+	if (!Private::TryGetAssetDataRealClass(AssetClass, InAssetData))
+	{
+		return EDataValidationResult::Invalid;
+	}
+
+	static const FTopLevelAssetPath BlueprintGeneratedClassName(FName(TEXT("/")), FName(TEXT("BlueprintGeneratedClass")));
+
+	auto AssetName = InAssetData.AssetName.ToString();
+
+	// Starting UE4.27 (?) some blueprints now have BlueprintGeneratedClass as their AssetClass, and their name ends with a _C.
+	if (InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	{
+		AssetName.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
+	}
+
+	const FSoftClassPath AssetClassPath(AssetClass.ToString());
+
+	if (const auto* AssetRealClass = AssetClassPath.TryLoadClass<UObject>())
+	{
+		if (IsClassExcluded(Context, AssetRealClass))
+		{
+			return EDataValidationResult::Invalid;
+		}
+
+		const auto Result = DoesAssetMatchesClassDescriptions(Context, AssetRealClass, AssetName);
+		if (Result == EDataValidationResult::Invalid)
+		{
+			return Result;
+		}
+	}
+
+	static const FTopLevelAssetPath BlueprintClassName(FName(TEXT("/Script/Engine")), FName(TEXT("Blueprint")));
+
+	if (InAssetData.AssetClassPath == BlueprintClassName || InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	{
+		if (!AssetName.StartsWith(Settings->BlueprintsPrefix))
+		{
+			Context.AddError(FText::FromString(TEXT("Generic blueprint assets must start with BP_")));
+			return EDataValidationResult::Invalid;
+		}
+	}
+
+	return EDataValidationResult::Valid;
+}
+
+bool UEditorNamingValidator::IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass) const
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+
+	for (const auto* ExcludedClass : Settings->ExcludedClasses)
+	{
+		if (AssetClass->IsChildOf(ExcludedClass))
+		{
+			Context.AddError(FText::Format(LOCTEXT("ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation"), FText::FromString(ExcludedClass->GetDefaultObjectName().ToString())));
+			return true;
+		}
+	}
+
+	return false;
+}
+
+EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName) const
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+	const UClass* MostPreciseClass = UObject::StaticClass();
+	EDataValidationResult Result = EDataValidationResult::NotValidated;
+
+	for (const auto& ClassDescription : Settings->ClassDescriptions)
+	{
+		if (ClassDescription.Class == nullptr)
+		{
+			FMessageLog DataValidationLog("NamingConventionValidation");
+			DataValidationLog
+			    .Warning()
+			    ->AddToken(FTextToken::Create(FText::FromString(FString::Printf(TEXT("invalid class description found : %s"), *ClassDescription.ToString()))));
+			continue;
+		}
+
+		const bool bClassFilterMatches = AssetClass->IsChildOf(ClassDescription.Class);
+		const bool bClassIsMorePreciseOrTheSame = ClassDescription.Class->IsChildOf(MostPreciseClass);
+		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && ClassDescription.Class == MostPreciseClass;
+		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && ClassDescription.Class != MostPreciseClass;
+		// had an error on this precision level before. but there could be another filter that passes
+		const bool bSamePrecisionCanBeValid = bClassIsSame && Result != EDataValidationResult::Valid;
+
+		const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
+		if (bCheckAffixes)
+		{
+			MostPreciseClass = ClassDescription.Class;
+
+			Result = EDataValidationResult::Valid;
+
+			if (!ClassDescription.Prefix.IsEmpty())
+			{
+				if (!AssetName.StartsWith(ClassDescription.Prefix))
+				{
+					InContext.AddError(FText::Format(LOCTEXT("WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Prefix)));
+					Result = EDataValidationResult::Invalid;
+				}
+			}
+
+			if (!ClassDescription.Suffix.IsEmpty())
+			{
+				if (!AssetName.EndsWith(ClassDescription.Suffix))
+				{
+					InContext.AddError(FText::Format(LOCTEXT("WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Suffix)));
+					Result = EDataValidationResult::Invalid;
+				}
+			}
+		}
+	}
+
+	return Result;
+}
+
+#undef LOCTEXT_NAMESPACE

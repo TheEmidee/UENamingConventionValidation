@@ -1,116 +1,113 @@
 #include "NamingValidatorFromFolder.h"
 
-#include "EditorNamingValidatorSubsystem.h"
+#include "Misc/DataValidation.h"
 
-UNamingValidatorFromFolder::UNamingValidatorFromFolder() :
-    bValidateAssetsAreInSameFolder( false ),
-    bCheckForRegularAssetNamingValidation( true )
+UNamingValidatorFromFolder::UNamingValidatorFromFolder()
+    : bValidateAssetsAreInSameFolder(false), bCheckForRegularAssetNamingValidation(true)
 {
-    IgnoredFolders = { "Shared", "Unused" };
+	IgnoredFolders = { "Shared", "Unused" };
 }
 
-bool UNamingValidatorFromFolder::CanValidateAssetNaming_Implementation( const UClass * asset_class, const FAssetData & asset_data ) const
+bool UNamingValidatorFromFolder::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
 {
-    const auto package_path = asset_data.PackagePath.ToString();
+	const auto PackagePath = InAssetData.PackagePath.ToString();
 
-    if ( !package_path.StartsWith( ParentFolderName ) )
-    {
-        return false;
-    }
+	if (!PackagePath.StartsWith(ParentFolderName))
+	{
+		return false;
+	}
 
-    for ( const auto & ignored_folder : IgnoredFolders )
-    {
-        if ( package_path.Contains( ignored_folder ) )
-        {
-            return false;
-        }
-    }
+	for (const auto& ignored_folder : IgnoredFolders)
+	{
+		if (PackagePath.Contains(ignored_folder))
+		{
+			return false;
+		}
+	}
 
-    for ( const auto * ignored_class : IgnoredClasses ) 
-    {
-        if ( asset_class->IsChildOf( ignored_class ) ) 
-        {
-            return false;
-        }
-    }
-    
+	const auto* AssetClass = InObject->GetClass();
 
-    return true;
+	for (const auto* ignored_class : IgnoredClasses)
+	{
+		if (AssetClass->IsChildOf(ignored_class))
+		{
+			return false;
+		}
+	}
 
+	return Super::CanValidateAsset_Implementation(InAssetData, InObject, InContext);
 }
 
-ENamingConventionValidationResult UNamingValidatorFromFolder::ValidateAssetNaming_Implementation( FText & error_message, const UClass * asset_class, const FAssetData & asset_data ) 
+EDataValidationResult UNamingValidatorFromFolder::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
 {
-    const auto package_path = asset_data.PackagePath.ToString();
-    const auto remaining_path = package_path.RightChop( ParentFolderName.Len() );
+	const auto PackagePath = InAssetData.PackagePath.ToString();
+	const auto RemainingPath = PackagePath.RightChop(ParentFolderName.Len());
 
-    TArray< FString > parts;
-    const auto * delimiter = TEXT( "/" );
-    remaining_path.ParseIntoArray( parts, delimiter );
+	TArray<FString> Parts;
+	const auto* Delimiter = TEXT("/");
+	RemainingPath.ParseIntoArray(Parts, Delimiter);
 
-    if ( bValidateAssetsAreInSameFolder && parts.Num() != 1 )
-    {
-        error_message = FText::FromString( FString::Printf( TEXT( "Assets in the folder %s must all be in the same subfolder" ), *ParentFolderName ) );
-        return ENamingConventionValidationResult::Invalid;
-    }
+	if (bValidateAssetsAreInSameFolder && Parts.Num() != 1)
+	{
+		Context.AddError(FText::FromString(FString::Printf(TEXT("Assets in the folder %s must all be in the same subfolder"), *ParentFolderName)));
+		return EDataValidationResult::Invalid;
+	}
 
-    const auto asset_name = asset_data.AssetName.ToString();
+	const auto AssetName = InAssetData.AssetName.ToString();
 
-    TArray< FString > filename_parts;
-    const auto * filename_delimiter = TEXT( "_" );
+	TArray<FString> FilenameParts;
+	const auto* FilenameDelimiter = TEXT("_");
 
-    if ( asset_name.ParseIntoArray( filename_parts, filename_delimiter ) == 0 || filename_parts.Num() < 2 )
-    {
-        error_message = FText::FromString( FString::Printf( TEXT( "Impossible to parse the filename. Asset name must conform to something like BP_XXX" ) ) );
-        return ENamingConventionValidationResult::Invalid;
-    }
+	if (AssetName.ParseIntoArray(FilenameParts, FilenameDelimiter) == 0 || FilenameParts.Num() < 2)
+	{
+		Context.AddError(FText::FromString(FString::Printf(TEXT("Impossible to parse the filename. Asset name must conform to something like BP_XXX"))));
+		return EDataValidationResult::Invalid;
+	}
 
-    if ( !IdentifierToken.IsEmpty() )
-    {
-        // If the identifier token contains underscores, we must rework the filename_parts to regroup the tokens to form the identifier
-        TArray< FString > identifier_token_parts;
-        IdentifierToken.ParseIntoArray( identifier_token_parts, TEXT( "_") );
-        const auto token_count = identifier_token_parts.Num();
+	if (!IdentifierToken.IsEmpty())
+	{
+		// If the identifier token contains underscores, we must rework the filename_parts to regroup the tokens to form the identifier
+		TArray<FString> IdentifierTokenParts;
+		IdentifierToken.ParseIntoArray(IdentifierTokenParts, TEXT("_"));
+		const auto TokenCount = IdentifierTokenParts.Num();
 
-        if ( token_count > 1 ) 
-        {
-            for ( auto filename_token_index = 0; filename_token_index < filename_parts.Num(); ++filename_token_index ) 
-            {
-                const auto token = filename_parts[ filename_token_index ];
-                if ( token == identifier_token_parts[ 0 ] ) 
-                {
-                    auto are_all_tokens_present = true;
+		if (TokenCount > 1)
+		{
+			for (auto FilenameTokenIndex = 0; FilenameTokenIndex < FilenameParts.Num(); ++FilenameTokenIndex)
+			{
+				if (const auto Token = FilenameParts[FilenameTokenIndex]; Token == IdentifierTokenParts[0])
+				{
+					auto bAreAllTokensPresent = true;
 
-                    for ( auto identifier_token_index = 1; identifier_token_index < identifier_token_parts.Num(); ++identifier_token_index ) 
-                    {
-                        if ( filename_parts[ filename_token_index + identifier_token_index ] != identifier_token_parts[ identifier_token_index ] ) 
-                        {
-                            are_all_tokens_present = false;
-                            break;
-                        }
-                    }
+					for (auto IdentifierTokenIndex = 1; IdentifierTokenIndex < IdentifierTokenParts.Num(); ++IdentifierTokenIndex)
+					{
+						if (FilenameParts[FilenameTokenIndex + IdentifierTokenIndex] != IdentifierTokenParts[IdentifierTokenIndex])
+						{
+							bAreAllTokensPresent = false;
+							break;
+						}
+					}
 
-                    if ( are_all_tokens_present ) 
-                    {
-                        filename_parts[ filename_token_index ] = IdentifierToken;
-                        filename_parts.RemoveAt( filename_token_index + 1, identifier_token_parts.Num() - 1 );
-                    }
-                }
-            }
-        }
+					if (bAreAllTokensPresent)
+					{
+						FilenameParts[FilenameTokenIndex] = IdentifierToken;
+						FilenameParts.RemoveAt(FilenameTokenIndex + 1, IdentifierTokenParts.Num() - 1);
+					}
+				}
+			}
+		}
 
-        if ( filename_parts[ 1 ] != IdentifierToken ) 
-        {
-            error_message = FText::FromString( FString::Printf( TEXT( "The name of the asset must start with %s_%s" ), *filename_parts[ 0 ], *IdentifierToken ) );
-            return ENamingConventionValidationResult::Invalid;
-        }
-    }
+		if (FilenameParts[1] != IdentifierToken)
+		{
+			Context.AddError(FText::FromString(FString::Printf(TEXT("The name of the asset must start with %s_%s"), *FilenameParts[0], *IdentifierToken)));
+			return EDataValidationResult::Invalid;
+		}
+	}
 
-    if ( !bCheckForRegularAssetNamingValidation )
-    {
-        return ENamingConventionValidationResult::Valid;
-    }
+	if (!bCheckForRegularAssetNamingValidation)
+	{
+		return EDataValidationResult::Valid;
+	}
 
-    return GEditor->GetEditorSubsystem< UEditorNamingValidatorSubsystem >()->IsAssetNamedCorrectly( error_message, asset_data, false );
-
+	return Super::ValidateLoadedAsset_Implementation(InAssetData, InAsset, Context);
 }
