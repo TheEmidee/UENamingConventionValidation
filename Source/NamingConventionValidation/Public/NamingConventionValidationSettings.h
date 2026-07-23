@@ -9,84 +9,87 @@
 USTRUCT()
 struct FNamingConventionValidationClassDescription
 {
-    GENERATED_USTRUCT_BODY()
+	GENERATED_USTRUCT_BODY()
 
-    FNamingConventionValidationClassDescription() :
-        Class( nullptr ),
-        Priority( 0 )
-    {}
+	FNamingConventionValidationClassDescription()
+	    : Priority(0)
+	{}
 
-    bool operator<( const FNamingConventionValidationClassDescription & other ) const
-    {
-        return Priority > other.Priority || ((Class && other.Class) ? (Class->GetName() < other.Class->GetName()) : false);
-    }
+	FNamingConventionValidationClassDescription(const FSoftClassPath& ClassPath, const FString& Prefix, const FString& Suffix, int Priority)
+	    : ClassPath(ClassPath), Prefix(Prefix), Suffix(Suffix), Priority(Priority) {}
 
-    FString ToString() const;
+	bool operator<(const FNamingConventionValidationClassDescription& other) const
+	{
+		if (Priority == other.Priority)
+		{
+			return ClassPath.ToString() < other.ClassPath.ToString();
+		}
+		return Priority > other.Priority;
+	}
 
-    UPROPERTY( config, EditAnywhere, meta = ( AllowAbstract = true ) )
-    TSoftClassPtr< UObject > ClassPath;
+	FString ToString() const;
 
-    UPROPERTY( transient )
-    UClass * Class;
+	UPROPERTY(config, EditAnywhere, meta = (AllowAbstract = true))
+	FSoftClassPath ClassPath;
 
-    UPROPERTY( config, EditAnywhere )
-    FString Prefix;
+	UPROPERTY(config, EditAnywhere)
+	FString Prefix;
 
-    UPROPERTY( config, EditAnywhere )
-    FString Suffix;
+	UPROPERTY(config, EditAnywhere)
+	FString Suffix;
 
-    UPROPERTY( config, EditAnywhere )
-    int Priority;
+	// Priorities with a higher value are selected first
+	UPROPERTY(config, EditAnywhere)
+	int Priority;
 };
 
-UCLASS( config = Editor, DefaultConfig )
+UCLASS(config = Editor, DefaultConfig)
 class NAMINGCONVENTIONVALIDATION_API UNamingConventionValidationSettings final : public UDeveloperSettings
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    UNamingConventionValidationSettings();
-
-    bool IsPathExcludedFromValidation( const FString & path ) const;
-
-    UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true ) )
-    TArray< FDirectoryPath > ExcludedDirectories;
-
-    UPROPERTY( config, EditAnywhere )
-    uint8 bLogWarningWhenNoClassDescriptionForAsset : 1;
-
-    UPROPERTY( config, EditAnywhere )
-    uint8 bAllowValidationInDevelopersFolder : 1;
-
-    UPROPERTY( config, EditAnywhere )
-    uint8 bAllowValidationOnlyInGameFolder : 1;
-
-    // Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked
-    UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder" ) )
-    TArray< FDirectoryPath > NonGameFoldersDirectoriesToProcess;
-
-    // Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked, and which contain one of those tokens in their path
-    UPROPERTY( config, EditAnywhere, meta = ( LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder" ) )
-    TArray< FString > NonGameFoldersDirectoriesToProcessContainingToken;
-
-    UPROPERTY( config, EditAnywhere )
-    uint8 bDoesValidateOnSave : 1;
-
-    UPROPERTY( config, EditAnywhere, meta = ( ConfigRestartRequired = true ) )
-    TArray< FNamingConventionValidationClassDescription > ClassDescriptions;
-
-    UPROPERTY( config, EditAnywhere )
-    TArray< TSoftClassPtr< UObject > > ExcludedClassPaths;
-
-    UPROPERTY( transient )
-    TArray< UClass * > ExcludedClasses;
-
-    UPROPERTY( config, EditAnywhere )
-    FString BlueprintsPrefix;
-
-    void PostProcessSettings();
+	UNamingConventionValidationSettings();
 
 #if WITH_EDITOR
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
+	UPROPERTY(config, EditAnywhere, meta = (LongPackageName, ConfigRestartRequired = true))
+	TArray<FDirectoryPath> ExcludedDirectories;
+
+	UPROPERTY(config, EditAnywhere)
+	uint8 bLogWarningWhenNoClassDescriptionForAsset : 1;
+
+	UPROPERTY(config, EditAnywhere)
+	uint8 bAllowValidationInDevelopersFolder : 1;
+
+	UPROPERTY(config, EditAnywhere)
+	uint8 bAllowValidationOnlyInGameFolder : 1;
+
+	// Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked
+	UPROPERTY(config, EditAnywhere, meta = (LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder"))
+	TArray<FDirectoryPath> NonGameFoldersDirectoriesToProcess;
+
+	// Add folders located outside of /Game that you still want to process when bAllowValidationOnlyInGameFolder is checked, and which contain one of those tokens in their path
+	UPROPERTY(config, EditAnywhere, meta = (LongPackageName, ConfigRestartRequired = true, editCondition = "bAllowValidationOnlyInGameFolder"))
+	TArray<FString> NonGameFoldersDirectoriesToProcessContainingToken;
+
+	UPROPERTY(config, EditAnywhere)
+	uint8 bDoesValidateOnSave : 1;
+
+	UPROPERTY(config, EditAnywhere)
+	TArray<FSoftClassPath> ExcludedClassPaths;
+
+	UPROPERTY(config, EditAnywhere)
+	FString BlueprintsPrefix;
+
+	UPROPERTY(config, meta = (ConfigRestartRequired = true))
+	TArray<FNamingConventionValidationClassDescription> ClassDescriptions;
+
+#if WITH_EDITORONLY_DATA
+	// Dummy parameters used to hook the editor UI
+	UPROPERTY(EditAnywhere, AdvancedDisplay, transient, Category = "Naming Convention Validation")
+	FString OpenClassDescription;
 #endif
 };

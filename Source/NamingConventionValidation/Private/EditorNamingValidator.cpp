@@ -5,7 +5,7 @@
 
 #define LOCTEXT_NAMESPACE "NamingConventionValidation"
 
-namespace Private {
+namespace {
 bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
 {
 	static const FName
@@ -30,6 +30,122 @@ bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
 
 	return true;
 }
+
+bool IsPathExcludedFromValidation(const FString& Path)
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+
+	if (!Path.StartsWith("/Game/") && Settings->bAllowValidationOnlyInGameFolder)
+	{
+		auto can_process_folder = Settings->NonGameFoldersDirectoriesToProcess.FindByPredicate([&Path](const auto& directory) {
+			return Path.StartsWith(directory.Path);
+		}) != nullptr;
+
+		if (!can_process_folder)
+		{
+			can_process_folder = Settings->NonGameFoldersDirectoriesToProcessContainingToken.FindByPredicate([&Path](const auto& token) {
+				return Path.Contains(token);
+			}) != nullptr;
+		}
+
+		if (!can_process_folder)
+		{
+			return true;
+		}
+	}
+
+	if (Path.StartsWith("/Game/Developers/") && !Settings->bAllowValidationInDevelopersFolder)
+	{
+		return true;
+	}
+
+	for (const auto& excluded_path : Settings->ExcludedDirectories)
+	{
+		if (Path.StartsWith(excluded_path.Path))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass)
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+
+	for (const auto& ExcludedClass : Settings->ExcludedClassPaths)
+	{
+		TSoftClassPtr<UObject> SoftClassPtr(ExcludedClass);
+
+		if (auto* Class = SoftClassPtr.LoadSynchronous())
+		{
+			if (AssetClass->IsChildOf(Class))
+			{
+				Context.AddError(FText::Format(LOCTEXT("ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation"), FText::FromString(ExcludedClass.ToString())));
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+EDataValidationResult DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName)
+{
+	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
+	const UClass* MostPreciseClass = UObject::StaticClass();
+	EDataValidationResult Result = EDataValidationResult::NotValidated;
+
+	for (const auto& ClassDescription : Settings->ClassDescriptions)
+	{
+		TSoftClassPtr<UObject> SoftClassPtr(ClassDescription.ClassPath);
+		UClass* Class = SoftClassPtr.LoadSynchronous();
+		if (Class == nullptr)
+		{
+			FMessageLog DataValidationLog("NamingConventionValidation");
+			DataValidationLog
+			    .Warning()
+			    ->AddToken(FTextToken::Create(FText::FromString(FString::Printf(TEXT("invalid class description found : %s"), *ClassDescription.ToString()))));
+			continue;
+		}
+
+		const bool bClassFilterMatches = AssetClass->IsChildOf(Class);
+		const bool bClassIsMorePreciseOrTheSame = Class->IsChildOf(MostPreciseClass);
+		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && Class == MostPreciseClass;
+		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && Class != MostPreciseClass;
+		// had an error on this precision level before. but there could be another filter that passes
+		const bool bSamePrecisionCanBeValid = bClassIsSame && Result != EDataValidationResult::Valid;
+
+		const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
+		if (bCheckAffixes)
+		{
+			MostPreciseClass = Class;
+
+			Result = EDataValidationResult::Valid;
+
+			if (!ClassDescription.Prefix.IsEmpty())
+			{
+				if (!AssetName.StartsWith(ClassDescription.Prefix))
+				{
+					InContext.AddError(FText::Format(LOCTEXT("WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Prefix)));
+					Result = EDataValidationResult::Invalid;
+				}
+			}
+
+			if (!ClassDescription.Suffix.IsEmpty())
+			{
+				if (!AssetName.EndsWith(ClassDescription.Suffix))
+				{
+					InContext.AddError(FText::Format(LOCTEXT("WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Suffix)));
+					Result = EDataValidationResult::Invalid;
+				}
+			}
+		}
+	}
+
+	return Result;
+}
 }
 
 bool UEditorNamingValidator::CanValidateAsset_Implementation(const FAssetData& InAssetData, UObject* InObject, FDataValidationContext& InContext) const
@@ -40,13 +156,13 @@ bool UEditorNamingValidator::CanValidateAsset_Implementation(const FAssetData& I
 EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation(const FAssetData& InAssetData, UObject* InAsset, FDataValidationContext& Context)
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
-	if (Settings->IsPathExcludedFromValidation(InAssetData.PackageName.ToString()))
+	if (IsPathExcludedFromValidation(InAssetData.PackageName.ToString()))
 	{
 		return EDataValidationResult::Valid;
 	}
 
 	FName AssetClass;
-	if (!Private::TryGetAssetDataRealClass(AssetClass, InAssetData))
+	if (!TryGetAssetDataRealClass(AssetClass, InAssetData))
 	{
 		return EDataValidationResult::Invalid;
 	}
@@ -89,76 +205,6 @@ EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation
 	}
 
 	return EDataValidationResult::Valid;
-}
-
-bool UEditorNamingValidator::IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass) const
-{
-	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
-
-	for (const auto* ExcludedClass : Settings->ExcludedClasses)
-	{
-		if (AssetClass->IsChildOf(ExcludedClass))
-		{
-			Context.AddError(FText::Format(LOCTEXT("ExcludedClass", "Assets of class '{0}' are excluded from naming convention validation"), FText::FromString(ExcludedClass->GetDefaultObjectName().ToString())));
-			return true;
-		}
-	}
-
-	return false;
-}
-
-EDataValidationResult UEditorNamingValidator::DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName) const
-{
-	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
-	const UClass* MostPreciseClass = UObject::StaticClass();
-	EDataValidationResult Result = EDataValidationResult::NotValidated;
-
-	for (const auto& ClassDescription : Settings->ClassDescriptions)
-	{
-		if (ClassDescription.Class == nullptr)
-		{
-			FMessageLog DataValidationLog("NamingConventionValidation");
-			DataValidationLog
-			    .Warning()
-			    ->AddToken(FTextToken::Create(FText::FromString(FString::Printf(TEXT("invalid class description found : %s"), *ClassDescription.ToString()))));
-			continue;
-		}
-
-		const bool bClassFilterMatches = AssetClass->IsChildOf(ClassDescription.Class);
-		const bool bClassIsMorePreciseOrTheSame = ClassDescription.Class->IsChildOf(MostPreciseClass);
-		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && ClassDescription.Class == MostPreciseClass;
-		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && ClassDescription.Class != MostPreciseClass;
-		// had an error on this precision level before. but there could be another filter that passes
-		const bool bSamePrecisionCanBeValid = bClassIsSame && Result != EDataValidationResult::Valid;
-
-		const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
-		if (bCheckAffixes)
-		{
-			MostPreciseClass = ClassDescription.Class;
-
-			Result = EDataValidationResult::Valid;
-
-			if (!ClassDescription.Prefix.IsEmpty())
-			{
-				if (!AssetName.StartsWith(ClassDescription.Prefix))
-				{
-					InContext.AddError(FText::Format(LOCTEXT("WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Prefix)));
-					Result = EDataValidationResult::Invalid;
-				}
-			}
-
-			if (!ClassDescription.Suffix.IsEmpty())
-			{
-				if (!AssetName.EndsWith(ClassDescription.Suffix))
-				{
-					InContext.AddError(FText::Format(LOCTEXT("WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Suffix)));
-					Result = EDataValidationResult::Invalid;
-				}
-			}
-		}
-	}
-
-	return Result;
 }
 
 #undef LOCTEXT_NAMESPACE
