@@ -1,7 +1,7 @@
 {
     "FileVersion" : 3,
     "Version": 1.1,
-    "VersionName": "1.3.0",    
+    "VersionName": "1.3.1",
     "FriendlyName" : "Naming Convention Validation",
     "Description" : "An asset naming convention validation plug-in.",
     "Category" : "Validation",
@@ -17,5 +17,11 @@
             "Type" : "Editor",
             "LoadingPhase" : "PreDefault"
         }
-    ]
+    ],
+	"Plugins": [
+		{
+			"Name": "DataValidation",
+			"Enabled": true
+		}
+	]
 }
