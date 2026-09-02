@@ -17,5 +17,11 @@
             "Type" : "Editor",
             "LoadingPhase" : "PreDefault"
         }
-    ]
+    ],
+	"Plugins": [
+		{
+			"Name": "DataValidation",
+			"Enabled": true
+		}
+	]
 }
