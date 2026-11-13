@@ -6,20 +6,20 @@
 #define LOCTEXT_NAMESPACE "NamingConventionValidation"
 
 namespace {
-bool TryGetAssetDataRealClass(FName& asset_class, const FAssetData& InAssetData)
+bool TryGetAssetDataRealClass(FName& AssetClass, const FAssetData& InAssetData)
 {
 	static const FName
 	    NativeParentClassKey("NativeParentClass"),
 	    NativeClassKey("NativeClass");
 
-	if (!InAssetData.GetTagValue(NativeParentClassKey, asset_class))
+	if (!InAssetData.GetTagValue(NativeParentClassKey, AssetClass))
 	{
-		if (!InAssetData.GetTagValue(NativeClassKey, asset_class))
+		if (!InAssetData.GetTagValue(NativeClassKey, AssetClass))
 		{
-			if (const auto* asset = InAssetData.GetAsset())
+			if (const auto* Asset = InAssetData.GetAsset())
 			{
-				const FSoftClassPath class_path(asset->GetClass());
-				asset_class = *class_path.ToString();
+				const FSoftClassPath ClassPath(Asset->GetClass());
+				AssetClass = *ClassPath.ToString();
 			}
 			else
 			{
@@ -37,18 +37,18 @@ bool IsPathExcludedFromValidation(const FString& Path)
 
 	if (!Path.StartsWith("/Game/") && Settings->bAllowValidationOnlyInGameFolder)
 	{
-		auto can_process_folder = Settings->NonGameFoldersDirectoriesToProcess.FindByPredicate([&Path](const auto& directory) {
-			return Path.StartsWith(directory.Path);
+		auto bCanProcessFolder = Settings->NonGameFoldersDirectoriesToProcess.FindByPredicate([&Path](const auto& Directory) {
+			return Path.StartsWith(Directory.Path);
 		}) != nullptr;
 
-		if (!can_process_folder)
+		if (!bCanProcessFolder)
 		{
-			can_process_folder = Settings->NonGameFoldersDirectoriesToProcessContainingToken.FindByPredicate([&Path](const auto& token) {
-				return Path.Contains(token);
+			bCanProcessFolder = Settings->NonGameFoldersDirectoriesToProcessContainingToken.FindByPredicate([&Path](const auto& Token) {
+				return Path.Contains(Token);
 			}) != nullptr;
 		}
 
-		if (!can_process_folder)
+		if (!bCanProcessFolder)
 		{
 			return true;
 		}
@@ -59,9 +59,9 @@ bool IsPathExcludedFromValidation(const FString& Path)
 		return true;
 	}
 
-	for (const auto& excluded_path : Settings->ExcludedDirectories)
+	for (const auto& ExcludedPath : Settings->ExcludedDirectories)
 	{
-		if (Path.StartsWith(excluded_path.Path))
+		if (Path.StartsWith(ExcludedPath.Path))
 		{
 			return true;
 		}
