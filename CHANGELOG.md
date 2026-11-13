@@ -5,6 +5,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-11-13
+
+### Changed
+
+- CI now uses the shared workflows from `FishingCactus/ci-workflows-unreal` (clang-format, TODO to issue, version update) and runs the Claude PR review
+- Added CLAUDE.md with the plugin's conventions for AI-assisted development
+
+### Removed
+
+- Vale documentation linting (`.vale.ini` and its workflow)
+
 ## [1.4.0] - 2026-11-13
 
 ### Changed

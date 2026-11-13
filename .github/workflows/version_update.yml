@@ -1,0 +1,9 @@
+name: Check Version Updates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-version-consistency:
+    uses: FishingCactus/ci-workflows-unreal/.github/workflows/version-update.yml@develop
