@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Formatted the C++ sources with the MyGame `.clang-format`
+- Updated .clang-format and formatted the C++ sources
 - Renamed locals and parameters to follow the naming convention (PascalCase, `b` prefix for bools)
 
 ## [1.3.1] - 2026-09-02
