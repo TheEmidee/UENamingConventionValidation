@@ -1,0 +1,24 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'Source/**'
+      - '*.uplugin'
+      - 'Config/**'
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    # A reusable workflow cannot be granted more permissions than its caller gives it.
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    uses: FishingCactus/ci-workflows-unreal/.github/workflows/claude-review-plugin.yml@develop
+    # Passes ANTHROPIC_API_KEY (repo or org secret) to the shared workflow.
+    secrets: inherit
