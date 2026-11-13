@@ -27,8 +27,8 @@ void UNamingConventionValidationSettings::PostEditChangeProperty(FPropertyChange
 	    EngineDirectoryPath({ TEXT("/Engine/") });
 
 	// Cannot use AddUnique since FDirectoryPath does not have operator==
-	if (!ExcludedDirectories.ContainsByPredicate([](const auto& item) {
-		    return item.Path == EngineDirectoryPath.Path;
+	if (!ExcludedDirectories.ContainsByPredicate([](const auto& Item) {
+		    return Item.Path == EngineDirectoryPath.Path;
 	    }))
 	{
 		ExcludedDirectories.Add(EngineDirectoryPath);

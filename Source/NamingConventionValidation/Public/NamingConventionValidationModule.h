@@ -12,8 +12,8 @@ public:
 	static INamingConventionValidationModule& Get()
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_INamingConventionValidationModule_Get);
-		static auto& singleton = FModuleManager::LoadModuleChecked<INamingConventionValidationModule>("NamingConventionValidation");
-		return singleton;
+		static auto& Singleton = FModuleManager::LoadModuleChecked<INamingConventionValidationModule>("NamingConventionValidation");
+		return Singleton;
 	}
 
 	static bool IsAvailable()

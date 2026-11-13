@@ -21,13 +21,13 @@ struct FNamingConventionValidationClassDescription
 	    Suffix(Suffix),
 	    Priority(Priority) {}
 
-	bool operator<(const FNamingConventionValidationClassDescription& other) const
+	bool operator<(const FNamingConventionValidationClassDescription& Other) const
 	{
-		if (Priority == other.Priority)
+		if (Priority == Other.Priority)
 		{
-			return ClassPath.ToString() < other.ClassPath.ToString();
+			return ClassPath.ToString() < Other.ClassPath.ToString();
 		}
-		return Priority > other.Priority;
+		return Priority > Other.Priority;
 	}
 
 	FString ToString() const;

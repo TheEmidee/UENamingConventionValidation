@@ -18,9 +18,9 @@ bool UNamingValidatorFromFolder::CanValidateAsset_Implementation(const FAssetDat
 		return false;
 	}
 
-	for (const auto& ignored_folder : IgnoredFolders)
+	for (const auto& IgnoredFolder : IgnoredFolders)
 	{
-		if (PackagePath.Contains(ignored_folder))
+		if (PackagePath.Contains(IgnoredFolder))
 		{
 			return false;
 		}
@@ -28,9 +28,9 @@ bool UNamingValidatorFromFolder::CanValidateAsset_Implementation(const FAssetDat
 
 	const auto* AssetClass = InObject->GetClass();
 
-	for (const auto* ignored_class : IgnoredClasses)
+	for (const auto* IgnoredClass : IgnoredClasses)
 	{
-		if (AssetClass->IsChildOf(ignored_class))
+		if (AssetClass->IsChildOf(IgnoredClass))
 		{
 			return false;
 		}
