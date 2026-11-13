@@ -9,16 +9,16 @@ class NAMINGCONVENTIONVALIDATION_API INamingConventionValidationModule : public 
 {
 
 public:
-    static INamingConventionValidationModule & Get()
-    {
-        QUICK_SCOPE_CYCLE_COUNTER( STAT_INamingConventionValidationModule_Get );
-        static auto & singleton = FModuleManager::LoadModuleChecked< INamingConventionValidationModule >( "NamingConventionValidation" );
-        return singleton;
-    }
+	static INamingConventionValidationModule& Get()
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_INamingConventionValidationModule_Get);
+		static auto& singleton = FModuleManager::LoadModuleChecked<INamingConventionValidationModule>("NamingConventionValidation");
+		return singleton;
+	}
 
-    static bool IsAvailable()
-    {
-        QUICK_SCOPE_CYCLE_COUNTER( STAT_INamingConventionValidationModule_IsAvailable );
-        return FModuleManager::Get().IsModuleLoaded( "NamingConventionValidation" );
-    }
+	static bool IsAvailable()
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_INamingConventionValidationModule_IsAvailable);
+		return FModuleManager::Get().IsModuleLoaded("NamingConventionValidation");
+	}
 };

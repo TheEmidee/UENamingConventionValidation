@@ -11,12 +11,15 @@ struct FNamingConventionValidationClassDescription
 {
 	GENERATED_USTRUCT_BODY()
 
-	FNamingConventionValidationClassDescription()
-	    : Priority(0)
+	FNamingConventionValidationClassDescription() :
+	    Priority(0)
 	{}
 
-	FNamingConventionValidationClassDescription(const FSoftClassPath& ClassPath, const FString& Prefix, const FString& Suffix, int Priority)
-	    : ClassPath(ClassPath), Prefix(Prefix), Suffix(Suffix), Priority(Priority) {}
+	FNamingConventionValidationClassDescription(const FSoftClassPath& ClassPath, const FString& Prefix, const FString& Suffix, int Priority) :
+	    ClassPath(ClassPath),
+	    Prefix(Prefix),
+	    Suffix(Suffix),
+	    Priority(Priority) {}
 
 	bool operator<(const FNamingConventionValidationClassDescription& other) const
 	{

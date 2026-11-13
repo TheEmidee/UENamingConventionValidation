@@ -2,8 +2,9 @@
 
 #include "Misc/DataValidation.h"
 
-UNamingValidatorFromFolder::UNamingValidatorFromFolder()
-    : bValidateAssetsAreInSameFolder(false), bCheckForRegularAssetNamingValidation(true)
+UNamingValidatorFromFolder::UNamingValidatorFromFolder() :
+    bValidateAssetsAreInSameFolder(false),
+    bCheckForRegularAssetNamingValidation(true)
 {
 	IgnoredFolders = { "Shared", "Unused" };
 }
