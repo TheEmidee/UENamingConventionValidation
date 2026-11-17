@@ -19,7 +19,7 @@ IMPLEMENT_MODULE(FNamingConventionValidationModule, NamingConventionValidation)
 
 void FNamingConventionValidationModule::StartupModule()
 {
-	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FNamingConventionValidationModule::OnPostEngineInit);
+	FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &FNamingConventionValidationModule::OnPostEngineInit);
 }
 
 void FNamingConventionValidationModule::ShutdownModule()
