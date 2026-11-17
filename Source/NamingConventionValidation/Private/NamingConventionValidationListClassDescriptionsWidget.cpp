@@ -447,7 +447,6 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPres
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.BlendSpace")), TEXT("BS_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/CommonUI.CommonTextStyle")), TEXT("CTS_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Blutility.EditorUtilityWidgetBlueprint")), TEXT("EUW_"), TEXT(""), 10);
-			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/ContextualAnimation.ContextualAnimSceneAsset")), TEXT("CTXAS_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveFloat")), TEXT("CF_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveLinearColor")), TEXT("CC_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.CurveLinearColorAtlas")), TEXT("CA_"), TEXT(""), 0);
@@ -490,7 +489,6 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPres
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/EnhancedInput.PlayerMappableInputConfig")), TEXT("PMIC_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SkeletalMesh")), TEXT("SK_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.Skeleton")), TEXT("SKEL_"), TEXT(""), 0);
-			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/SmartObjectsModule.SmartObjectDefinition")), TEXT("SO_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundClass")), TEXT("SCL_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundCue")), TEXT("SC_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.SoundMix")), TEXT("SMix_"), TEXT(""), 0);
@@ -506,8 +504,6 @@ FReply SNamingConventionValidationListClassDescriptionsWidget::OnAddDefaultsPres
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.UserDefinedStruct")), TEXT("BPS_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/UMG.UserWidget")), TEXT("WBP_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Engine.World")), TEXT("L_"), TEXT(""), 0);
-			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Soundscape.SoundScapeColor")), TEXT("SSC_"), TEXT(""), 0);
-			Settings->ClassDescriptions.Emplace(FSoftClassPath(TEXT("/Script/Soundscape.SoundScapePalette")), TEXT("SSP_"), TEXT(""), 0);
 			Settings->ClassDescriptions.Sort();
 			Settings->TryUpdateDefaultConfigFile();
 		}

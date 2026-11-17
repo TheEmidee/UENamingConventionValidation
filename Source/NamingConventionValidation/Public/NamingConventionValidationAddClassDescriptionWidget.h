@@ -21,6 +21,7 @@ public:
 
 private:
 	const UClass* OnGetClass() const;
+	void CloseOwningWindow() const;
 	FNamingConventionValidationClassDescription ClassDescription;
 	bool bIsAdding = false;
 	TWeakPtr<SWindow> OwningWindow;

@@ -94,13 +94,16 @@ bool IsClassExcluded(FDataValidationContext& Context, const UClass* AssetClass)
 EDataValidationResult DoesAssetMatchesClassDescriptions(FDataValidationContext& InContext, const UClass* AssetClass, const FString& AssetName)
 {
 	const auto* Settings = GetDefault<UNamingConventionValidationSettings>();
-	const UClass* MostPreciseClass = UObject::StaticClass();
-	EDataValidationResult Result = EDataValidationResult::NotValidated;
+
+	// First pass: find the most derived class, among the class descriptions, that the asset class inherits from.
+	// All the matching classes are ancestors of AssetClass, so they form a single chain and the most derived one is unique.
+	TArray<TPair<const FNamingConventionValidationClassDescription*, const UClass*>, TInlineAllocator<8>> MatchingDescriptions;
+	const UClass* MostDerivedClass = nullptr;
 
 	for (const auto& ClassDescription : Settings->ClassDescriptions)
 	{
 		TSoftClassPtr<UObject> SoftClassPtr(ClassDescription.ClassPath);
-		UClass* Class = SoftClassPtr.LoadSynchronous();
+		const UClass* Class = SoftClassPtr.LoadSynchronous();
 		if (Class == nullptr)
 		{
 			FMessageLog DataValidationLog("NamingConventionValidation");
@@ -110,41 +113,59 @@ EDataValidationResult DoesAssetMatchesClassDescriptions(FDataValidationContext& 
 			continue;
 		}
 
-		const bool bClassFilterMatches = AssetClass->IsChildOf(Class);
-		const bool bClassIsMorePreciseOrTheSame = Class->IsChildOf(MostPreciseClass);
-		const bool bClassIsSame = bClassIsMorePreciseOrTheSame && Class == MostPreciseClass;
-		const bool bClassIsMorePrecise = bClassIsMorePreciseOrTheSame && Class != MostPreciseClass;
-		// had an error on this precision level before. but there could be another filter that passes
-		const bool bSamePrecisionCanBeValid = bClassIsSame && Result != EDataValidationResult::Valid;
-
-		const bool bCheckAffixes = bClassFilterMatches && (bClassIsMorePrecise || bSamePrecisionCanBeValid);
-		if (bCheckAffixes)
+		if (!AssetClass->IsChildOf(Class))
 		{
-			MostPreciseClass = Class;
+			continue;
+		}
 
-			Result = EDataValidationResult::Valid;
+		MatchingDescriptions.Emplace(&ClassDescription, Class);
 
-			if (!ClassDescription.Prefix.IsEmpty())
-			{
-				if (!AssetName.StartsWith(ClassDescription.Prefix))
-				{
-					InContext.AddError(FText::Format(LOCTEXT("WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Prefix)));
-					Result = EDataValidationResult::Invalid;
-				}
-			}
-
-			if (!ClassDescription.Suffix.IsEmpty())
-			{
-				if (!AssetName.EndsWith(ClassDescription.Suffix))
-				{
-					InContext.AddError(FText::Format(LOCTEXT("WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}"), FText::FromString(ClassDescription.ClassPath.ToString()), FText::FromString(ClassDescription.Suffix)));
-					Result = EDataValidationResult::Invalid;
-				}
-			}
+		if (MostDerivedClass == nullptr || Class->IsChildOf(MostDerivedClass))
+		{
+			MostDerivedClass = Class;
 		}
 	}
 
-	return Result;
+	if (MostDerivedClass == nullptr)
+	{
+		return EDataValidationResult::NotValidated;
+	}
+
+	// Second pass: only check the descriptions of the most derived class.
+	// Several descriptions can target the same class: the asset is valid if its name matches any of them.
+	TArray<FText, TInlineAllocator<4>> Errors;
+
+	for (const auto& [ClassDescription, Class] : MatchingDescriptions)
+	{
+		if (Class != MostDerivedClass)
+		{
+			continue;
+		}
+
+		const int32 ErrorCountBefore = Errors.Num();
+
+		if (!ClassDescription->Prefix.IsEmpty() && !AssetName.StartsWith(ClassDescription->Prefix))
+		{
+			Errors.Emplace(FText::Format(LOCTEXT("WrongPrefix", "Assets of class '{0}' must have a name which starts with {1}"), FText::FromString(ClassDescription->ClassPath.ToString()), FText::FromString(ClassDescription->Prefix)));
+		}
+
+		if (!ClassDescription->Suffix.IsEmpty() && !AssetName.EndsWith(ClassDescription->Suffix))
+		{
+			Errors.Emplace(FText::Format(LOCTEXT("WrongSuffix", "Assets of class '{0}' must have a name which ends with {1}"), FText::FromString(ClassDescription->ClassPath.ToString()), FText::FromString(ClassDescription->Suffix)));
+		}
+
+		if (Errors.Num() == ErrorCountBefore)
+		{
+			return EDataValidationResult::Valid;
+		}
+	}
+
+	for (const auto& Error : Errors)
+	{
+		InContext.AddError(Error);
+	}
+
+	return EDataValidationResult::Invalid;
 }
 }
 
@@ -179,6 +200,8 @@ EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation
 
 	const FSoftClassPath AssetClassPath(AssetClass.ToString());
 
+	bool bCheckBlueprintNaming = true;
+
 	if (const auto* AssetRealClass = AssetClassPath.TryLoadClass<UObject>())
 	{
 		if (IsClassExcluded(Context, AssetRealClass))
@@ -186,21 +209,35 @@ EDataValidationResult UEditorNamingValidator::ValidateLoadedAsset_Implementation
 			return EDataValidationResult::Invalid;
 		}
 
-		const auto Result = DoesAssetMatchesClassDescriptions(Context, AssetRealClass, AssetName);
-		if (Result == EDataValidationResult::Invalid)
+		switch (DoesAssetMatchesClassDescriptions(Context, AssetRealClass, AssetName))
 		{
-			return Result;
+			case EDataValidationResult::Invalid:
+				return EDataValidationResult::Invalid;
+			case EDataValidationResult::Valid:
+			{
+				bCheckBlueprintNaming = false;
+			}
+			break;
+			case EDataValidationResult::NotValidated:
+				break;
+			default:
+			{
+				checkNoEntry();
+			}
 		}
 	}
 
-	static const FTopLevelAssetPath BlueprintClassName(FName(TEXT("/Script/Engine")), FName(TEXT("Blueprint")));
-
-	if (InAssetData.AssetClassPath == BlueprintClassName || InAssetData.AssetClassPath == BlueprintGeneratedClassName)
+	if (bCheckBlueprintNaming)
 	{
-		if (!AssetName.StartsWith(Settings->BlueprintsPrefix))
+		static const FTopLevelAssetPath BlueprintClassName(FName(TEXT("/Script/Engine")), FName(TEXT("Blueprint")));
+
+		if (InAssetData.AssetClassPath == BlueprintClassName || InAssetData.AssetClassPath == BlueprintGeneratedClassName)
 		{
-			Context.AddError(FText::FromString(TEXT("Generic blueprint assets must start with BP_")));
-			return EDataValidationResult::Invalid;
+			if (!AssetName.StartsWith(Settings->BlueprintsPrefix))
+			{
+				Context.AddError(FText::FromString(TEXT("Generic blueprint assets must start with BP_")));
+				return EDataValidationResult::Invalid;
+			}
 		}
 	}
 
