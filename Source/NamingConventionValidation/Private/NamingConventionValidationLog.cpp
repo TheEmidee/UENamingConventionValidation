@@ -1,3 +1,3 @@
 #include "NamingConventionValidationLog.h"
 
-DEFINE_LOG_CATEGORY( LogNamingConventionValidation );
+DEFINE_LOG_CATEGORY(LogNamingConventionValidation);

@@ -42,9 +42,9 @@ void ShowAddDescriptionWidget(const FNamingConventionValidationClassDescription&
 class FClassDescriptionItem : public TSharedFromThis<FClassDescriptionItem>
 {
 public:
-	FClassDescriptionItem(const FNamingConventionValidationClassDescription& InClassDescription)
-	    : ClassDescription(InClassDescription)
-	    , CheckState(ECheckBoxState::Checked)
+	FClassDescriptionItem(const FNamingConventionValidationClassDescription& InClassDescription) :
+	    ClassDescription(InClassDescription),
+	    CheckState(ECheckBoxState::Checked)
 	{
 	}
 

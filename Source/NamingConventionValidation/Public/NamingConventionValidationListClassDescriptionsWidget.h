@@ -28,7 +28,7 @@ private:
 	/** Handler for when column header checkbox that toggles the check state of all items is clicked */
 	void OnToggleSelectedCheckBox(ECheckBoxState InNewState);
 
-	/** Creates the widget for a list item */
+	/** Creates the widget for a list Item */
 	TSharedRef<ITableRow> MakeClassDescriptionListItemWidget(TSharedPtr<FClassDescriptionItem> Item, const TSharedRef<STableViewBase>& OwnerTable);
 
 	/** Returns true if the user can click the remove button */
